@@ -7,6 +7,7 @@ local prefix = "BIGMAMBASA"
 local gGuildName
 local gDB = {}
 local gItems = {}
+local hasInit = false
 
 local defaults = {}
 
@@ -19,18 +20,21 @@ EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
     if (event == "TRADE_SKILL_UPDATE") then
+        if not hasInit then init() end
         guildProfessions:hej("trade")
     end
     if (event == "CRAFT_UPDATE") then
+        if not hasInit then init() end
         guildProfessions:hej("craft")
     end
     if event == "CHAT_MSG_ADDON" then
+        if not hasInit then init() end
         MessageRecieveHandler(...)
     end
     if event == "PLAYER_ENTERING_WORLD" then
         local isInitialLogin, isReloadingUi = ...
         if isInitialLogin or isReloadingUi then
-            init()
+            if not hasInit then init() end
         end
     end
 
@@ -50,7 +54,6 @@ function persistPlayerProfessions(data)
 end
 
 function insertToDb(profession, items, sourcePlayer)
-    DeepPrint(items)
     print("profession " .. profession)
     print("source " .. sourcePlayer)
     print("source " .. tostring(gGuildName))
@@ -65,9 +68,7 @@ function insertToDb(profession, items, sourcePlayer)
             db[itemId][sourcePlayer] = true
         end
     end
-
     gDB[gGuildName].professions[profession] = db
-    DeepPrint(gDB)
 end
 
 function getItemLink(itemId)
@@ -82,11 +83,18 @@ function parseMessage(data)
     return sourcePlayer, profession, items
 end
 
+function IsPlayerInGuild()
+    return IsInGuild() and GetGuildInfo("player")
+end
+
 function init()
-    
-    local guildName, _, _, _ = GetGuildInfo("player");
-    local realmName = GetNormalizedRealmName()
-    gGuildName = guildName .." - " ..realmName
+
+    --guild name doesn't exist on start, stupid right
+    if not IsPlayerInGuild() then return end
+    local guildName, _, _, realmName = GetGuildInfo(playerName);
+    realmName = GetNormalizedRealmName()
+    print("Guild name" .. guildName)
+    gGuildName = guildName .." - " .. realmName
 
     GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
     gDB = GuildProfessionPlayersDB
@@ -94,6 +102,8 @@ function init()
     gDB[gGuildName]["professions"] = GuildProfessionPlayersDB[gGuildName]["professions"] or {}
 
     C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+
+    hasInit = true
 
 end
 
@@ -185,6 +195,7 @@ function GetItemId(prof_type, index)
 
 end
 function guildProfessions:hej(prof_type)
+
     if (prof_type == "craft" or "trade") then
         local proff = GetProfInfo(prof_type)
         local items = {}
