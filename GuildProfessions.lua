@@ -1,27 +1,23 @@
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 
+guildProfessions = {}
 local playerName = UnitName("player")
 local prefix = "BIGMAMBASA"
-local PlayerTradeSkills = {}
-local unpack = unpack;
-local db = {}
+local gGuildName
+local gDB = {}
+local gItems = {}
 
-local MessageQueue = {};  
-local MessageThrottle = 0.1;
+local defaults = {}
 
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 EventFrame:RegisterEvent("CRAFT_UPDATE")
-EventFrame:RegisterEvent("ADDON_LOADED");
+EventFrame:RegisterEvent("ADDON_LOADED")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
 EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
-
-    if event == "ADDON_LOADED" then
-        init()
-    end
     if (event == "TRADE_SKILL_UPDATE") then
         guildProfessions:hej("trade")
     end
@@ -32,10 +28,9 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         MessageRecieveHandler(...)
     end
     if event == "PLAYER_ENTERING_WORLD" then
-        print(playerName)
         local isInitialLogin, isReloadingUi = ...
         if isInitialLogin or isReloadingUi then
-            C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+            init()
         end
     end
 
@@ -45,27 +40,61 @@ function MessageRecieveHandler(prefix, message, sourceChannel, sourcePlayer)
     local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
     local decompressed = LibDeflate:DecompressDeflate(decoded)
     local success, data = LibSerialize:Deserialize(decompressed)
-    DeepPrint(data)
+
     persistPlayerProfessions(data)
 end
 
-
 function persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
+    insertToDb(profession, items, sourcePlayer)
+end
 
+function insertToDb(profession, items, sourcePlayer)
+    DeepPrint(items)
+    print("profession " .. profession)
+    print("source " .. sourcePlayer)
+    print("source " .. tostring(gGuildName))
+
+    local db = gDB[gGuildName].professions[profession] or {}
+
+    for itemId, reagents in pairs(items) do
+        db[itemId] = db[itemId] or {}
+        db[itemId]["reagents"] = reagents
+        local exists = db[itemId][sourcePlayer] or false
+        if not exists then
+            db[itemId][sourcePlayer] = true
+        end
+    end
+
+    gDB[gGuildName].professions[profession] = db
+    DeepPrint(gDB)
+end
+
+function getItemLink(itemId)
+    local _, itemLink, _, _, _, _, _, _, _, itemIcon, _, _, _, _, _, _, _ = GetItemInfo(itemId)
+    return itemLink, itemIcon
 end
 
 function parseMessage(data)
     local sourcePlayer = data["player"]
     local profession = data["profession"]
     local items = data["items"]
-
     return sourcePlayer, profession, items
 end
 
-
 function init()
-    db["guild_professions"] = GuildProfessionPlayersDB or {}
+    
+    local guildName, _, _, _ = GetGuildInfo("player");
+    local realmName = GetNormalizedRealmName()
+    gGuildName = guildName .." - " ..realmName
+
+    GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
+    gDB = GuildProfessionPlayersDB
+    gDB[gGuildName] = GuildProfessionPlayersDB[gGuildName] or {}
+    gDB[gGuildName]["professions"] = GuildProfessionPlayersDB[gGuildName]["professions"] or {}
+
+    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+
 end
 
 function GetProfInfo(prof_type)
@@ -81,7 +110,6 @@ function GetProfInfo(prof_type)
 end
 
 function GetRecipeCount(prof_type)
-
     if (prof_type == "trade") then
         return GetNumTradeSkills()
     elseif (prof_type == "craft") then
@@ -115,49 +143,44 @@ function GetNumberOfReagents(prof_type, index)
     return numberOfReagents
 end
 
-function GetReagentLink(prof_type, index, n)
-    local itemString
+function GetReagentItemid(prof_type, index, n)
+    local itemLink
     if (prof_type == "craft") then
-        itemString = GetCraftReagentItemLink(index, n)
+        itemLink = GetCraftReagentItemLink(index, n)
     elseif (prof_type == "trade") then
-        itemString = GetTradeSkillReagentItemLink(index, n)
+        itemLink = GetTradeSkillReagentItemLink(index, n)
     end
 
-    return itemString
+    if (not itemLink) then
+        return
+    end
+    itemID = itemLink:match("item:(%d+)")
+
+    return itemID
 
 end
 
 function GetReagentCount(prof_type, index, n)
     local reagantCount
-    print("checking count")
     if (prof_type == "craft") then
         _, _, reagantCount, _ = GetCraftReagentInfo(index, n);
-        print(reagantCount)
     elseif (prof_type == "trade") then
         _, _, reagantCount, _ = GetTradeSkillReagentInfo(index, n)
-        print(reagantCount)
-
     end
     return tostring(reagantCount)
 end
 
-function GetItemLink(prof_type, index)
+function GetItemId(prof_type, index)
     local itemLink, itemID
-
     if (prof_type == "trade") then
         itemLink = GetTradeSkillItemLink(index)
-        if (not itemLink) then
-            return
-        end
-        itemID = itemLink:match("item:(%d+)")
     elseif (prof_type == "craft") then
         itemLink = GetCraftItemLink(index)
-        if (not itemLink) then
-            return
-        end
-        itemID = itemLink:match("item:(%d+)")
     end
-
+    if (not itemLink) then
+        return
+    end
+    itemID = itemLink:match("item:(%d+)")
     return itemID
 
 end
@@ -167,7 +190,7 @@ function guildProfessions:hej(prof_type)
         local items = {}
         if (proff ~= nil) then
             items = GetRecipes(prof_type)
-            broadCastMessage(items,proff)
+            broadCastMessage(items, proff)
         end
     end
 end
@@ -175,19 +198,27 @@ end
 function GetRecipes(prof_type)
     local items = {}
     for i = 1, GetRecipeCount(prof_type) do
-        local item = GetItemLink(prof_type, i)
-        table.insert(items, item)
+        local itemId = GetItemId(prof_type, i)
+        local reagent = {}
+
+        if (itemId ~= nil) then
+
+            for j = 1, GetNumberOfReagents(prof_type, i) do
+                local reagentItemId = GetReagentItemid(prof_type, i, j)
+                reagent[reagentItemId] = GetReagentCount(prof_type, i, j);
+            end
+            items[itemId] = reagent
+        end
     end
     return items
 end
 
-
-function broadCastMessage(items,proff)
-    local payload = prepareMessage(items,proff)
+function broadCastMessage(items, proff)
+    local payload = prepareMessage(items, proff)
     C_ChatInfo.SendAddonMessage(prefix, payload, "WHISPER", playerName)
 end
 
-function prepareMessage(items,proff)
+function prepareMessage(items, proff)
     local message = {}
     message["player"] = playerName
     message["profession"] = proff
@@ -198,14 +229,26 @@ function prepareMessage(items,proff)
     return encoded
 end
 
+function DeepPrint(e)
 
-function DeepPrint (e)
+    -- items = {
+    --     [itemId] = {
+    --         [reagentId] = 1,
+    --     }
+    -- }
+
     if type(e) == "table" then
-        for k,v in pairs(e) do 
-            print("key " ..k)
-            DeepPrint(v)
+        for k, v in pairs(e) do
+            print("------------------")
+            if type(k) == "table" then
+                DeepPrint(k)
+            else
+                print("key " .. k)
+                DeepPrint(v)
+            end
         end
-    else 
-        print("value" ..e)
+    else
+            print("value" .. tostring(e))
+            print("------------------")
     end
 end
