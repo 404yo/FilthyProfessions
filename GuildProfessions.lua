@@ -1,40 +1,48 @@
+--made by ur mom
+--licensed by my farts
+local GuildProfessions = LibStub("AceAddon-3.0"):NewAddon("GuildProfessions")
+
+
+--Globals
+-------------------------------------
+_G["GuildProfessions"] = GuildProfessions
+-------------------------------------
+
+
+
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 
-guildProfessions = {}
 local playerName = UnitName("player")
 local prefix = "BIGMAMBASA"
 local gGuildName
 local gDB = {}
 local gItems = {}
 local hasInit = false
-
 local defaults = {}
 
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 EventFrame:RegisterEvent("CRAFT_UPDATE")
-EventFrame:RegisterEvent("ADDON_LOADED")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
 EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
+
+
 EventFrame:SetScript("OnEvent", function(self, event, ...)
+    if not hasInit then init() end
     if (event == "TRADE_SKILL_UPDATE") then
-        if not hasInit then init() end
-        guildProfessions:hej("trade")
+        SendSyncMessage("trade")
     end
     if (event == "CRAFT_UPDATE") then
-        if not hasInit then init() end
-        guildProfessions:hej("craft")
+       SendSyncMessage("craft")
     end
     if event == "CHAT_MSG_ADDON" then
-        if not hasInit then init() end
         MessageRecieveHandler(...)
     end
     if event == "PLAYER_ENTERING_WORLD" then
         local isInitialLogin, isReloadingUi = ...
         if isInitialLogin or isReloadingUi then
-            if not hasInit then init() end
         end
     end
 
@@ -57,7 +65,7 @@ function insertToDb(profession, items, sourcePlayer)
     print("profession " .. profession)
     print("source " .. sourcePlayer)
     print("source " .. tostring(gGuildName))
-
+    
     local db = gDB[gGuildName].professions[profession] or {}
 
     for itemId, reagents in pairs(items) do
@@ -194,8 +202,7 @@ function GetItemId(prof_type, index)
     return itemID
 
 end
-function guildProfessions:hej(prof_type)
-
+function SendSyncMessage(prof_type)
     if (prof_type == "craft" or "trade") then
         local proff = GetProfInfo(prof_type)
         local items = {}
