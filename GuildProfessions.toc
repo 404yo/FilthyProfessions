@@ -8,5 +8,5 @@
 libs.xml
 #@end-no-lib-strip@
 
-
+GUI\GUI.lua
 GuildProfessions.lua

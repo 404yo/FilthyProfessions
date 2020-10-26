@@ -3,9 +3,9 @@
 --Globals
 -------------------------------------
 _G["DB"] = gDB
+GUI = _G["GUI"]
 -------------------------------------
-
-
+GUI:init()
 
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
