@@ -1,11 +1,8 @@
 --made by ur mom
 --licensed by my farts
-local GuildProfessions = LibStub("AceAddon-3.0"):NewAddon("GuildProfessions")
-
-
 --Globals
 -------------------------------------
-_G["GuildProfessions"] = GuildProfessions
+_G["DB"] = gDB
 -------------------------------------
 
 
@@ -21,12 +18,14 @@ local gItems = {}
 local hasInit = false
 local defaults = {}
 
+
+
+
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 EventFrame:RegisterEvent("CRAFT_UPDATE")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
 EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-
 
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
@@ -117,7 +116,6 @@ end
 
 function GetProfInfo(prof_type)
     local skillLineDisplayName
-
     if (prof_type == "trade") then
         skillLineDisplayName, _, _ = GetTradeSkillLine()
         return skillLineDisplayName
@@ -198,7 +196,12 @@ function GetItemId(prof_type, index)
     if (not itemLink) then
         return
     end
+
     itemID = itemLink:match("item:(%d+)")
+    if itemID == nil then
+        itemID = itemLink:match("enchant:(%d+)")
+    end
+
     return itemID
 
 end
