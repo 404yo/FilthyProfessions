@@ -29,9 +29,16 @@ function GUI:CreateMainFrame(frameName)
 
 end
 
+function GUI:CreateContentFrame(frameName,parent,menuFrame)
+    local frame = CreateFrame("Frame",frameName,parent,"InsetFrameTemplate2")
+    frame:SetWidth(parent:GetWidth()-menuFrame:GetWidth()-17)
+    frame:SetHeight(menuFrame:GetHeight())
+    frame:SetPoint("LEFT", menuFrame,"RIGHT")
+end
+
 function GUI:CreateMenuFrame(frameName,parent)
     local menuFrame = CreateFrame("Frame",frameName,parent,"InsetFrameTemplate2") 
-    menuFrame:SetWidth(parent:GetWidth()/4)
+    menuFrame:SetWidth(parent:GetWidth()/5-20)
     menuFrame:SetHeight(parent:GetHeight()-30)
     menuFrame:SetPoint("BOTTOMLEFT",parent,"BOTTOMLEFT",6,6)
     return menuFrame
@@ -55,6 +62,7 @@ function GUI:Create()
     GUI.frame = GUI:CreateMainFrame(frameName)
     local menuName = "LEFT_MENU"
     GUI.menu = GUI:CreateMenuFrame(menuName,GUI.frame)
+    GUI.content = GUI:CreateContentFrame("contenhtFrame",GUI.frame,GUI.menu)
 
     ----------------PROFESSION CHECKBOXES--------------------
     local alchyMyName = "ALCHEMY_BOX"
@@ -73,11 +81,6 @@ function GUI:Create()
     GUI.engineeringBox = GUI:CreateCheckBox(enchantingName,GUI.menu,"Enchanting",true)
     GUI.engineeringBox:SetPoint("TOP",GUI.enchantingBox,"BOTTOM",0,-5)
 
-
-
-
-
-    
     local cookingName = "COOKING_BOX"
     GUI.cookingBox = GUI:CreateCheckBox(cookingName,GUI.menu,"Cooking",true)
     GUI.cookingBox:SetPoint("TOP",GUI.engineeringBox,"BOTTOM",0,-90)
