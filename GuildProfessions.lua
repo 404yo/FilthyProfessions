@@ -1,12 +1,7 @@
---made by ur mom
---licensed by my farts
---Globals
--------------------------------------
-_G["DB"] = gDB
-GUI = _G["GUI"]
--------------------------------------
-GUI:init()
-
+-- made by ur mom
+-- licensed by my farts
+-- Globals
+local GuildProfessions = {}
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 
@@ -18,8 +13,12 @@ local gItems = {}
 local hasInit = false
 local defaults = {}
 
+-------------------------------------
+_G["DB"] = {}
+_G["GuildProfessions"] = GuildProfessions
+GUI = _G["GUI"]
 
-
+-------------------------------------
 
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
@@ -27,14 +26,15 @@ EventFrame:RegisterEvent("CRAFT_UPDATE")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
 EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
-
 EventFrame:SetScript("OnEvent", function(self, event, ...)
-    if not hasInit then init() end
+    if not hasInit then
+      GuildProfessions:init()
+    end
     if (event == "TRADE_SKILL_UPDATE") then
         SendSyncMessage("trade")
     end
     if (event == "CRAFT_UPDATE") then
-       SendSyncMessage("craft")
+        SendSyncMessage("craft")
     end
     if event == "CHAT_MSG_ADDON" then
         MessageRecieveHandler(...)
@@ -61,10 +61,7 @@ function persistPlayerProfessions(data)
 end
 
 function insertToDb(profession, items, sourcePlayer)
-    print("profession " .. profession)
-    print("source " .. sourcePlayer)
-    print("source " .. tostring(gGuildName))
-    
+
     local db = gDB[gGuildName].professions[profession] or {}
 
     for itemId, reagents in pairs(items) do
@@ -78,7 +75,7 @@ function insertToDb(profession, items, sourcePlayer)
     gDB[gGuildName].professions[profession] = db
 end
 
-function getItemLink(itemId)
+function GuildProfessions:GetItemLink(itemId)
     local _, itemLink, _, _, _, _, _, _, _, itemIcon, _, _, _, _, _, _, _ = GetItemInfo(itemId)
     return itemLink, itemIcon
 end
@@ -94,23 +91,29 @@ function IsPlayerInGuild()
     return IsInGuild() and GetGuildInfo("player")
 end
 
-function init()
+function GuildProfessions:init()
 
-    --guild name doesn't exist on start, stupid right
-    if not IsPlayerInGuild() then return end
+    -- guild name doesn't exist on start, stupid right
+    if not IsPlayerInGuild() then
+        return
+    end
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
-    print("Guild name" .. guildName)
-    gGuildName = guildName .." - " .. realmName
 
+    gGuildName = guildName .. " - " .. realmName
+    
     GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
     gDB = GuildProfessionPlayersDB
     gDB[gGuildName] = GuildProfessionPlayersDB[gGuildName] or {}
     gDB[gGuildName]["professions"] = GuildProfessionPlayersDB[gGuildName]["professions"] or {}
 
-    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+    _G.DB = gDB[gGuildName]["professions"]
 
+    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
     hasInit = true
+
+
+    GUI:init()
 
 end
 
@@ -140,7 +143,7 @@ function GetRecipeInfo(prof_type, index)
     local name, type
 
     if (prof_type == "trade") then
-        name, type, _, _, _, _ = GetTradeSkillInfo(index);
+        name, type, _, _, _, _ = GetTradeSkillInfo(index)
     elseif (prof_type == "craft") then
         name, _, type, _, _, _, _ = GetCraftInfo(index)
     end
@@ -250,26 +253,25 @@ function prepareMessage(items, proff)
     return encoded
 end
 
-function DeepPrint(e)
+function GuildProfessions:DeepPrint(e)
 
     -- items = {
     --     [itemId] = {
     --         [reagentId] = 1,
     --     }
     -- }
-
-    if type(e) == "table" then
+    if( type(e) == "table") then
         for k, v in pairs(e) do
-            print("------------------")
-            if type(k) == "table" then
-                DeepPrint(k)
+            if type(v) == "table" then
+                print("Key [" .. k .. "]")
+                GuildProfessions:DeepPrint(v)
             else
-                print("key " .. k)
-                DeepPrint(v)
+                print("Value [".. tostring(k).."] [ "..tostring(v) .. "]")
+                print("*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*")
             end
         end
     else
-            print("value" .. tostring(e))
-            print("------------------")
+        print("Value ["..tostring(v) .. "]")
+        print("*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*")
     end
 end
