@@ -3,6 +3,8 @@ local GUI = {}
 local GUI_INIT = false
 local GuildProfessions = {}
 
+-- https://www.townlong-yak.com/framexml/8.1.5/ObjectAPI/Item.lua#33
+
 ------------PROFFESSIONS DATABASES-----------------------------------------
 local AlchemyDB = {}
 local EnchantingDB = {}
@@ -23,19 +25,18 @@ function GUI:init()
     GUI:reloadDB()
 
     GUI:refresh()
- 
+
 end
 
 function UIMenuButton_OnLoad()
-	-- this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-	-- this:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
-	-- this:RegisterEvent("PARTY_MEMBER_ENABLE");
-	-- this:RegisterEvent("PARTY_MEMBER_DISABLE");
+    -- this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+    -- this:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
+    -- this:RegisterEvent("PARTY_MEMBER_ENABLE");
+    -- this:RegisterEvent("PARTY_MEMBER_DISABLE");
 end
 
-
 function GUI:reloadDB()
-    gDB  = _G.DB
+    gDB = _G.DB
     AlchemyDB = gDB["Alchemy"] or {}
     EnchantingDB = gDB["Enchanting"] or {}
     BlacksmithingDB = gDB["Black Smithing"] or {}
@@ -55,7 +56,7 @@ function GUI:CreateMainFrame(frameName)
     local frame = CreateFrame("Frame", frameName, UIParent)
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER")
-    frame:SetWidth(900)
+    frame:SetWidth(800)
     frame:SetHeight(600)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -67,19 +68,97 @@ function GUI:CreateMainFrame(frameName)
     return frame
 end
 
-function GUI:CreateItemButtonFrame(frameName, parent,itemData)
-    local rowFrame = CreateFrame("Button", frameName, parent, "InsetFrameTemplate2")
-    rowFrame:SetWidth((parent:GetWidth()-4))
+function Item_Onclick(self)
+    print("clicking on " .. tostring(self.detail))
+
+    if self.detail:IsShown() then
+        print("Set hidden")
+        self.detail:Hide()
+    else
+        print("Set shows")
+        if GUI.frame.activeDetail ~= nil and GUI.frame.activeDetail:GetName() ~= self.detail:GetName() then
+            print("Set hide this")
+            GUI.frame.activeDetail.detail:Hide()
+        end
+        self.detail:Show()
+    end
+
+    GUI.frame.activeDetail = self
+
+end
+
+function GUI:CreateItemButtonFrame(frameName, parent, itemData)
+
+    local rowFrame = CreateFrame("Button", frameName, parent)
+
+    rowFrame:SetWidth((parent:GetWidth() - 4))
     rowFrame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-    rowFrame:SetHeight((parent:GetHeight()-4) / 22)
-    rowFrame:SetPoint("TOP", parent, "TOP",0,0)
-    rowFrame.text = rowFrame:CreateFontString(rowFrame,"OVERLAY","GAMETOOLTIPTEXT")
-    rowFrame.text:SetPoint("LEFT",20,0)
+    rowFrame:SetHeight((parent:GetHeight() - 4) / 22)
+    rowFrame:SetPoint("TOP", parent, "TOP", 0, 0)
+
+    -- row icon
+
+    rowFrame.icon = rowFrame:CreateTexture("rowIcon" .. itemData[0].."_icon")
+	rowFrame.icon:SetPoint("LEFT", rowFrame, "LEFT", 1, -1)
+	rowFrame.icon:SetHeight(18)
+	rowFrame.icon:SetWidth(18)
+	rowFrame.icon:SetTexture(itemData[3])
+
+
+
+    rowFrame.text = rowFrame:CreateFontString(rowFrame, "OVERLAY", "GAMETOOLTIPTEXT")
+    rowFrame.text:SetPoint("LEFT", 20, 0)
     rowFrame.text:SetText(itemData[0])
 
+    rowFrame:RegisterForClicks("AnyDown")
+    rowFrame:SetScript("OnClick", Item_Onclick)
+    rowFrame:Show()
 
+    ---detail window
+    rowFrame.detail = CreateFrame("Frame", "ItemDetailFrame" .. itemData[0], GUI.frame, "BasicFrameTemplateWithInset")
+    rowFrame.detail:SetWidth(GUI.frame:GetWidth() - GUI.parentItemFrame:GetWidth())
+    rowFrame.detail:SetHeight(GUI.parentItemFrame:GetHeight())
+    rowFrame.detail:SetPoint("LEFT", GUI.parentItemFrame, "RIGHT", 0, 0)
+    rowFrame.detail:Hide()
 
+    -- item info
+    rowFrame.detail.info = CreateFrame("Frame", "ItemInfoRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    rowFrame.detail.info:SetWidth(rowFrame.detail:GetWidth() - 10)
+    rowFrame.detail.info:SetHeight(rowFrame.detail:GetHeight() / 5 - 10)
+    rowFrame.detail.info:SetPoint("TOP", rowFrame.detail, "TOP", 0, -25)
+    --icon
+    rowFrame.detail.info.icon = rowFrame.detail.info:CreateTexture("ItemInfoRow" .. itemData[0].."_icon")
+	rowFrame.detail.info.icon:SetPoint("TOPLEFT", rowFrame.detail.info, "TOPLEFT", 1, -1)
+	rowFrame.detail.info.icon:SetHeight(26)
+	rowFrame.detail.info.icon:SetWidth(26)
+	rowFrame.detail.info.icon:SetTexture(itemData[3])
 
+    -- reagents needed
+    rowFrame.detail.reagents = CreateFrame("Frame", "regeantRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    rowFrame.detail.reagents:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
+    rowFrame.detail.reagents:SetHeight(rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25)
+    rowFrame.detail.reagents:SetPoint("TOPLEFT", rowFrame.detail.info, "BOTTOMLEFT", 0, 0)
+
+    -- players window
+    rowFrame.detail.players = CreateFrame("Frame", "playersRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    rowFrame.detail.players:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
+    rowFrame.detail.players:SetHeight((rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25)/2)
+    rowFrame.detail.players:SetPoint("TOPRIGHT", rowFrame.detail.info, "BOTTOMRIGHt", 0, 0)
+
+    -- total cost row (Should get info form auctioneer house)
+
+    -- tab row pin an item, your think about to make (should be able to display in another tab with all other pinned)
+
+    -- rowFrame.detail.bg = rowFrame.detail:CreateTexture(nil, "BACKGROUND")
+    -- rowFrame.detail.bg:SetTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Factions.blp")
+    -- rowFrame.detail.bg:SetWidth(200)
+    -- rowFrame.detail.bg:SetHeight(200)
+    -- rowFrame.detail.bg:SetPoint("CENTER", rowFrame.detail, "CENTER")
+    -- rowFrame.detail.bg:Show()
+
+    rowFrame.detail.text = rowFrame.detail:CreateFontString(rowFrame.detail.bg, "OVERLAY", "GAMETOOLTIPTEXT")
+    rowFrame.detail.text:SetPoint("CENTER", 20, 0)
+    rowFrame.detail.text:SetText(itemData[0])
 
     -- local first = true
     -- local playerText = {}
@@ -113,25 +192,24 @@ function GUI:CreateItemButtonFrame(frameName, parent,itemData)
 
     -- end
 
-    
     return rowFrame
 end
 
-function GUI:CreateScrollFrame(frameName,parent,child) 
-    local scrollFrame =  CreateFrame ("ScrollFrame", frameName, parent, "UIPanelScrollFrameTemplate")
+function GUI:CreateScrollFrame(frameName, parent, child)
+    local scrollFrame = CreateFrame("ScrollFrame", frameName, parent, "UIPanelScrollFrameTemplate")
     scrollFrame:SetWidth(child:GetWidth())
     scrollFrame:SetHeight(child:GetHeight())
-    scrollFrame:SetPoint("BOTTOM", parent, "BOTTOM",-12,5)
+    scrollFrame:SetPoint("BOTTOM", parent, "BOTTOM", -12, 5)
     scrollFrame:SetScrollChild(child)
     return scrollFrame
 
 end
 
 function GUI:CreateContentFrame(frameName, parent)
-    local contentFrame = CreateFrame("Frame", frameName, parent, "InsetFrameTemplate2")
-    contentFrame:SetWidth(parent:GetWidth()-40)
-    contentFrame:SetHeight(parent:GetHeight()-100)
-    contentFrame:SetPoint("BOTTOM", parent, "BOTTOM",-12,5)
+    local contentFrame = CreateFrame("Frame", frameName, parent)
+    contentFrame:SetWidth(parent:GetWidth() - 40)
+    contentFrame:SetHeight(parent:GetHeight() - 100)
+    contentFrame:SetPoint("BOTTOM", parent, "BOTTOM", -12, 5)
     return contentFrame
 end
 
@@ -163,31 +241,33 @@ function GUI:Create()
     GUI.frame = GUI:CreateMainFrame(frameName)
     -- local menuName = "LEFT_MENU"
     -- GUI.menu = GUI:CreateMenuFrame(menuName, GUI.frame)
-    
-    GUI.parentItemFrame = CreateFrame("Frame","MAIN_ITEM_FRAME",GUI.frame,"BasicFrameTemplateWithInset")
-    GUI.parentItemFrame:SetWidth(GUI.frame:GetWidth()/3+80)
+
+    GUI.parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.frame, "BasicFrameTemplateWithInset")
+    GUI.parentItemFrame:SetWidth(GUI.frame:GetWidth() / 3 + 80)
     GUI.parentItemFrame:SetHeight(GUI.frame:GetHeight())
     GUI.parentItemFrame:SetPoint("LEFT", GUI.frame, "LEFT")
-    
-    GUI.itemFilterMenu = CreateFrame("Frame","ITEM_FILTER_MENU", GUI.parentItemFrame,"InsetFrameTemplate2")
-    GUI.itemFilterMenu:SetHeight(GUI.parentItemFrame:GetHeight()/6)
-    GUI.itemFilterMenu:SetWidth(GUI.parentItemFrame:GetWidth()-10)
-    GUI.itemFilterMenu:SetPoint("TOP",GUI.parentItemFrame,"TOP",0,-20)
 
+    -- GUI.parentItemFrame = GUI.parentItemFrame:CreateFontString(nil, "OVERLAY");
+    -- GUI.parentItemFrame.title:SetFontObject("GameFontHighlight");
+    -- GUI.parentItemFrame.title:SetPoint("TOP",  GUI.parentItemFrame, "TOP", 5, 0);
+    -- GUI.parentItemFrame.title:SetText("CrenUI Buff Options");
+
+    GUI.itemFilterMenu = CreateFrame("Frame", "ITEM_FILTER_MENU", GUI.parentItemFrame, "InsetFrameTemplate2")
+    GUI.itemFilterMenu:SetHeight(GUI.parentItemFrame:GetHeight() / 6)
+    GUI.itemFilterMenu:SetWidth(GUI.parentItemFrame:GetWidth() - 10)
+    GUI.itemFilterMenu:SetPoint("TOP", GUI.parentItemFrame, "TOP", 0, -20)
 
     local contenFrameName = "CONTENT_FRAME"
-    GUI.content = GUI:CreateContentFrame(contenFrameName,GUI.parentItemFrame)
-    GUI.content:SetHeight(GUI.parentItemFrame:GetHeight()-GUI.itemFilterMenu:GetHeight())
-    GUI.content:SetWidth(GUI.parentItemFrame:GetWidth()-40)
-    GUI.content:SetPoint("TOP",GUI.itemFilterMenu,"BOTTOM",-15,0)
+    GUI.content = GUI:CreateContentFrame(contenFrameName, GUI.parentItemFrame)
+    GUI.content:SetHeight(GUI.parentItemFrame:GetHeight() - GUI.itemFilterMenu:GetHeight())
+    GUI.content:SetWidth(GUI.parentItemFrame:GetWidth() - 40)
+    GUI.content:SetPoint("TOP", GUI.itemFilterMenu, "BOTTOM", -15, 0)
 
-    
     local scrollFrameName = "ITEM_SCROLL_FRAME"
-    GUI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.parentItemFrame,GUI.content)
-    GUI.scrollFrame:SetHeight(GUI.parentItemFrame:GetHeight()-GUI.itemFilterMenu:GetHeight())
-    GUI.scrollFrame:SetWidth(GUI.parentItemFrame:GetWidth()-40)
-    GUI.scrollFrame:SetPoint("TOP",GUI.itemFilterMenu,"BOTTOM",-15,0)
-
+    GUI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.parentItemFrame, GUI.content)
+    GUI.scrollFrame:SetHeight(GUI.parentItemFrame:GetHeight() - GUI.itemFilterMenu:GetHeight())
+    GUI.scrollFrame:SetWidth(GUI.parentItemFrame:GetWidth() - 40)
+    GUI.scrollFrame:SetPoint("TOP", GUI.itemFilterMenu, "BOTTOM", -15, 0)
 
     ----------------PROFESSION CHECKBOXES--------------------
     local alchyMyName = "ALCHEMY_BOX"
@@ -202,7 +282,7 @@ function GUI:Create()
     GUI.enchantingBox = GUI:CreateCheckBox(enchantingName, GUI.menu, "Enchanting", true)
     GUI.enchantingBox:SetPoint("TOP", GUI.blacksmithingBox, "BOTTOM", 0, -5)
 
-    local engineeringName = "ENGINEERING_BOX"   
+    local engineeringName = "ENGINEERING_BOX"
     GUI.engineeringBox = GUI:CreateCheckBox(enchantingName, GUI.menu, "Enchanting", true)
     GUI.engineeringBox:SetPoint("TOP", GUI.enchantingBox, "BOTTOM", 0, -5)
 
@@ -216,57 +296,74 @@ function GUI:Create()
     ---------------------------------------------------------------------------
 end
 
-function GUI:ParseDBItem(itemID,item) 
+function GUI:ParseDBItem(itemID, item)
     local parsedItem = {}
     local reagents = {}
-    local players =  {}
-    local itemLink = GuildProfessions:GetItemLink(itemID)
-    for k,v in pairs(item) do
-        if (k == "reagents") then 
+    local players = {}
+    -- local itemLink = GuildProfessions:GetItemLink(itemID)
+    local item2 = Item:CreateFromItemID(tonumber(itemID))
+    item2:ContinueOnItemLoad(function()
+        print(item2:GetItemLink())
+    end)
+
+    for k, v in pairs(item) do
+        if (k == "reagents") then
             local reagentItem = {}
-            for reagentKey,count in pairs(v) do
+            for reagentKey, count in pairs(v) do
                 local reagentItemLink = GuildProfessions:GetItemLink(reagentKey)
-                reagentItem[tostring(reagentItemLink)] = count
+
+                local reagent = Item:CreateFromItemID(tonumber(itemID))
+                reagent:ContinueOnItemLoad(function()
+                    print(reagent:GetItemLink())
+                end)
+
+                reagentItem[tostring(reagent:GetItemLink())] = count
             end
 
-           reagents = reagentItem
+            reagents = reagentItem
         else
-            table.insert(players,k)
+            table.insert(players, k)
         end
     end
-    parsedItem = { [0] = itemLink, [1] =  players, [2] = reagents}
+    parsedItem = {
+        [0] = item2:GetItemLink(),
+        [1] = players,
+        [2] = reagents,
+        [3] = item2:GetItemIcon(),
+        [4] = item2:GetCurrentItemLevel(),
+    }
     return parsedItem
 end
 
 function GUI:FillContent()
     GUI:reloadDB()
     items = {}
-    for k,v in pairs(TailoringDB) do
-        table.insert(items,GUI:ParseDBItem(k,v))
+    for k, v in pairs(TailoringDB) do
+        table.insert(items, GUI:ParseDBItem(k, v))
     end
 
-    for k,v in pairs(FirstAidDB) do
-        table.insert(items,GUI:ParseDBItem(k,v))
+    for k, v in pairs(FirstAidDB) do
+        table.insert(items, GUI:ParseDBItem(k, v))
     end
 
-    for k,v in pairs(EnchantingDB) do
-        table.insert(items,GUI:ParseDBItem(k,v))
+    for k, v in pairs(EnchantingDB) do
+        table.insert(items, GUI:ParseDBItem(k, v))
     end
 
-    for k,v in pairs(CookingDB) do
-        table.insert(items,GUI:ParseDBItem(k,v))
+    for k, v in pairs(CookingDB) do
+        table.insert(items, GUI:ParseDBItem(k, v))
     end
-    
+
     GUI.items = {}
 
     local firstItem = true
-    for k,v in pairs(items) do
-        GUI.items[k] = GUI:CreateItemFrame("firstItemRow", GUI.content, v)
-        if firstItem == false then 
-            GUI.items[k]:SetPoint("TOP", GUI.items[k-1], "BOTTOM")
+    for k, v in pairs(items) do
+        GUI.items[k] = GUI:CreateItemButtonFrame("firstItemRow", GUI.content, v)
+        if firstItem == false then
+            GUI.items[k]:SetPoint("TOP", GUI.items[k - 1], "BOTTOM")
         end
         firstItem = false
-    
+
     end
 
 end
