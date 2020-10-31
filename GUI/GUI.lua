@@ -89,6 +89,11 @@ end
 
 function GUI:CreateItemButtonFrame(frameName, parent, itemData)
 
+    local itemLink = itemData[0]
+    local players = itemData[1]
+    local reagents = itemData[2]
+    local itemTexure = itemData[3]
+
     local rowFrame = CreateFrame("Button", frameName, parent)
 
     rowFrame:SetWidth((parent:GetWidth() - 4))
@@ -98,13 +103,11 @@ function GUI:CreateItemButtonFrame(frameName, parent, itemData)
 
     -- row icon
 
-    rowFrame.icon = rowFrame:CreateTexture("rowIcon" .. itemData[0].."_icon")
-	rowFrame.icon:SetPoint("LEFT", rowFrame, "LEFT", 1, -1)
-	rowFrame.icon:SetHeight(18)
-	rowFrame.icon:SetWidth(18)
-	rowFrame.icon:SetTexture(itemData[3])
-
-
+    rowFrame.icon = rowFrame:CreateTexture("rowIcon" .. itemData[0] .. "_icon")
+    rowFrame.icon:SetPoint("LEFT", rowFrame, "LEFT", 1, -1)
+    rowFrame.icon:SetHeight(18)
+    rowFrame.icon:SetWidth(18)
+    rowFrame.icon:SetTexture(itemTexure)
 
     rowFrame.text = rowFrame:CreateFontString(rowFrame, "OVERLAY", "GAMETOOLTIPTEXT")
     rowFrame.text:SetPoint("LEFT", 20, 0)
@@ -122,28 +125,78 @@ function GUI:CreateItemButtonFrame(frameName, parent, itemData)
     rowFrame.detail:Hide()
 
     -- item info
-    rowFrame.detail.info = CreateFrame("Frame", "ItemInfoRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    rowFrame.detail.info = CreateFrame("Frame", "ItemInfoRow" .. itemData[0], rowFrame.detail,
+                               "BasicFrameTemplateWithInset")
     rowFrame.detail.info:SetWidth(rowFrame.detail:GetWidth() - 10)
     rowFrame.detail.info:SetHeight(rowFrame.detail:GetHeight() / 5 - 10)
     rowFrame.detail.info:SetPoint("TOP", rowFrame.detail, "TOP", 0, -25)
-    --icon
-    rowFrame.detail.info.icon = rowFrame.detail.info:CreateTexture("ItemInfoRow" .. itemData[0].."_icon")
-	rowFrame.detail.info.icon:SetPoint("TOPLEFT", rowFrame.detail.info, "TOPLEFT", 1, -1)
-	rowFrame.detail.info.icon:SetHeight(26)
-	rowFrame.detail.info.icon:SetWidth(26)
-	rowFrame.detail.info.icon:SetTexture(itemData[3])
+    -- icon
+    rowFrame.detail.info.icon = rowFrame.detail.info:CreateTexture("ItemInfoRow" .. itemData[0] .. "_icon")
+    rowFrame.detail.info.icon:SetPoint("LEFT", rowFrame.detail.info, "LEFT", 10, -10)
+    rowFrame.detail.info.icon:SetHeight(40)
+    rowFrame.detail.info.icon:SetWidth(40)
+    rowFrame.detail.info.icon:SetTexture(itemData[3])
 
-    -- reagents needed
-    rowFrame.detail.reagents = CreateFrame("Frame", "regeantRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    -- reagents window
+    rowFrame.detail.reagents = CreateFrame("Frame", "regeantRow" .. itemData[0], rowFrame.detail,
+                                   "BasicFrameTemplateWithInset")
     rowFrame.detail.reagents:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
     rowFrame.detail.reagents:SetHeight(rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25)
     rowFrame.detail.reagents:SetPoint("TOPLEFT", rowFrame.detail.info, "BOTTOMLEFT", 0, 0)
 
+
+
+    local first = true
+    local reagentList = {}
+    for k, v in pairs(reagents) do
+        print(k,v)
+        local reagent = CreateFrame("Button", "player" .. k, rowFrame.detail.reagents)
+        reagent:SetWidth((rowFrame.detail.reagents:GetWidth() - 4))
+        reagent:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+        reagent:SetHeight((rowFrame.detail.reagents:GetHeight() - 4) / 22)
+
+        if first then 
+            reagent:SetPoint("TOP", rowFrame.detail.reagents, "TOP", 0, -50)
+            first = false
+        else 
+            reagent:SetPoint("TOP",  reagentList[#reagentList-1], "BOTTOM", 0, -50)
+        end
+
+        reagent.text = reagent:CreateFontString(rowFrame, "OVERLAY","GAMETOOLTIPTEXT")
+        reagent.text:SetPoint("LEFT", 20, 0)
+        reagent.text:SetText(k .." x"..v)
+        table.insert(reagentList,reagent)
+    end
+
+
+
+
+
+
+
+
+
     -- players window
-    rowFrame.detail.players = CreateFrame("Frame", "playersRow" .. itemData[0], rowFrame.detail,"BasicFrameTemplateWithInset")
+    rowFrame.detail.players = CreateFrame("Frame", "playersRow" .. itemData[0], rowFrame.detail,
+                                  "BasicFrameTemplateWithInset")
     rowFrame.detail.players:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
-    rowFrame.detail.players:SetHeight((rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25)/2)
+    rowFrame.detail.players:SetHeight((rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25) / 2)
     rowFrame.detail.players:SetPoint("TOPRIGHT", rowFrame.detail.info, "BOTTOMRIGHt", 0, 0)
+
+    for k, v in pairs(players) do
+        rowFrame.detail.players.player = CreateFrame("Button", "player" .. v, rowFrame.detail.players)
+        rowFrame.detail.players.player:SetWidth((rowFrame.detail.players:GetWidth() - 4))
+        rowFrame.detail.players.player:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+        rowFrame.detail.players.player:SetHeight((rowFrame.detail.players:GetHeight() - 4) / 22)
+        rowFrame.detail.players.player:SetPoint("TOP", rowFrame.detail.players, "TOP", 0, -50)
+
+        rowFrame.detail.players.player.text = rowFrame.detail.players.player:CreateFontString(rowFrame, "OVERLAY","GAMETOOLTIPTEXT")
+        rowFrame.detail.players.player.text:SetPoint("LEFT", 20, 0)
+        rowFrame.detail.players.player.text:SetText(v)
+    end
+
+
+
 
     -- total cost row (Should get info form auctioneer house)
 
@@ -296,41 +349,54 @@ function GUI:Create()
     ---------------------------------------------------------------------------
 end
 
-function GUI:ParseDBItem(itemID, item)
+function GUI:ParseDBItem(itemID, item, proffesion)
     local parsedItem = {}
     local reagents = {}
     local players = {}
+    local itemLink
+    local icon
     -- local itemLink = GuildProfessions:GetItemLink(itemID)
-    local item2 = Item:CreateFromItemID(tonumber(itemID))
-    item2:ContinueOnItemLoad(function()
-        print(item2:GetItemLink())
-    end)
+
+    if proffesion == "Enchanting" then         
+        local item2 = Spell:CreateFromSpellID(tonumber(itemID))
+        item2:ContinueOnSpellLoad(function()
+            itemLink = item2:GetSpellName()
+            icon = item2:GetSpellTexture(itemID)
+            print(item2:GetSpellInfo())
+        end)
+    
+    else 
+        local item2 = Item:CreateFromItemID(tonumber(itemID))
+        item2:ContinueOnItemLoad(function()
+            itemLink = item2:GetItemLink()
+            icon = item2:GetItemIcon()
+        end)
+    
+    end
 
     for k, v in pairs(item) do
         if (k == "reagents") then
             local reagentItem = {}
             for reagentKey, count in pairs(v) do
-                local reagentItemLink = GuildProfessions:GetItemLink(reagentKey)
+                -- local reagentItemLink = GuildProfessions:GetItemLink(reagentKey)
 
-                local reagent = Item:CreateFromItemID(tonumber(itemID))
+                local reagent = Item:CreateFromItemID(tonumber(reagentKey))
                 reagent:ContinueOnItemLoad(function()
-                    print(reagent:GetItemLink())
+                    -- print(reagent:GetItemLink())
                 end)
-
                 reagentItem[tostring(reagent:GetItemLink())] = count
             end
-
             reagents = reagentItem
         else
             table.insert(players, k)
         end
     end
     parsedItem = {
-        [0] = item2:GetItemLink(),
+        [0] = itemLink,
         [1] = players,
         [2] = reagents,
-        [3] = item2:GetItemIcon(),
-        [4] = item2:GetCurrentItemLevel(),
+        [3] = icon,
+        -- [4] = item2:GetCurrentItemLevel()
     }
     return parsedItem
 end
@@ -339,19 +405,19 @@ function GUI:FillContent()
     GUI:reloadDB()
     items = {}
     for k, v in pairs(TailoringDB) do
-        table.insert(items, GUI:ParseDBItem(k, v))
+        table.insert(items, GUI:ParseDBItem(k, v,"Talioring"))
     end
 
     for k, v in pairs(FirstAidDB) do
-        table.insert(items, GUI:ParseDBItem(k, v))
+        table.insert(items, GUI:ParseDBItem(k, v,"FirstAid"))
     end
 
     for k, v in pairs(EnchantingDB) do
-        table.insert(items, GUI:ParseDBItem(k, v))
+        table.insert(items, GUI:ParseDBItem(k, v,"Enchanting"))
     end
 
     for k, v in pairs(CookingDB) do
-        table.insert(items, GUI:ParseDBItem(k, v))
+        table.insert(items, GUI:ParseDBItem(k, v,"Cooking"))
     end
 
     GUI.items = {}
