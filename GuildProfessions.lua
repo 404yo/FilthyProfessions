@@ -1,6 +1,4 @@
--- made by ur mom
--- licensed by my farts
--- Globals
+
 local GuildProfessions = {}
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
@@ -8,15 +6,23 @@ local LibSerialize = LibStub("LibSerialize")
 local playerName = UnitName("player")
 local prefix = "BIGMAMBASA"
 local gGuildName
-local gDB = {}
 local gItems = {}
 local hasInit = false
 local defaults = {}
+local gProfile
+
+
 
 -------------------------------------
-_G["DB"] = {}
+-- _G["DB"] = {}
 _G["GuildProfessions"] = GuildProfessions
+_G["profile"] = gProfile
 GUI = _G["GUI"]
+DB = _G.DB
+-- _G["professionsDB"] = gDB
+
+
+
 
 -------------------------------------
 
@@ -57,22 +63,7 @@ end
 
 function persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
-    insertToDb(profession, items, sourcePlayer)
-end
-
-function insertToDb(profession, items, sourcePlayer)
-
-    local db = gDB[gGuildName].professions[profession] or {}
-
-    for itemId, reagents in pairs(items) do
-        db[itemId] = db[itemId] or {}
-        db[itemId]["reagents"] = reagents
-        local exists = db[itemId][sourcePlayer] or false
-        if not exists then
-            db[itemId][sourcePlayer] = true
-        end
-    end
-    gDB[gGuildName].professions[profession] = db
+    DB:InsertToDB(profession, items, sourcePlayer)
 end
 
 function GuildProfessions:GetItemLink(itemId)
@@ -87,33 +78,29 @@ function parseMessage(data)
     return sourcePlayer, profession, items
 end
 
-function IsPlayerInGuild()
+function GuildProfessions:IsPlayerInGuild()
     return IsInGuild() and GetGuildInfo("player")
 end
 
 function GuildProfessions:init()
 
     -- guild name doesn't exist on start, stupid right
-    if not IsPlayerInGuild() then
+    if not GuildProfessions:IsPlayerInGuild() then
         return
     end
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
 
-    gGuildName = guildName .. " - " .. realmName
-    
-    GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
-    gDB = GuildProfessionPlayersDB
-    gDB[gGuildName] = GuildProfessionPlayersDB[gGuildName] or {}
-    gDB[gGuildName]["professions"] = GuildProfessionPlayersDB[gGuildName]["professions"] or {}
+    gProfile = guildName .. " - " ..realmName
+    print(gProfile)
+    DB:init(gProfile)
 
-    _G.DB = gDB[gGuildName]["professions"]
 
     C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+    GUI:init()
     hasInit = true
 
 
-    GUI:init()
 
 end
 
@@ -173,7 +160,7 @@ function GetReagentItemid(prof_type, index, n)
     if (not itemLink) then
         return
     end
-    itemID = itemLink:match("item:(%d+)")
+    local itemID = itemLink:match("item:(%d+)")
 
     return itemID
 
