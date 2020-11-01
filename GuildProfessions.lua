@@ -88,18 +88,20 @@ function GuildProfessions:init()
     if not GuildProfessions:IsPlayerInGuild() then
         return
     end
+
+    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
 
     gProfile = guildName .. " - " ..realmName
     print(gProfile)
-    DB:init(gProfile)
-
-
-    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
-    GUI:init()
-    hasInit = true
-
+    DB:init(gProfile, function(boolean) 
+        if boolean then
+            GUI:init()
+            hasInit = true
+        end
+    end)
 
 
 end
