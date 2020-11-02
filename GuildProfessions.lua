@@ -1,17 +1,15 @@
-
 local GuildProfessions = {}
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 
 local playerName = UnitName("player")
-local prefix = "BIGMAMBASA"
+local gPrefix = "BIGMAMBASA"
+local gRealm
 local gGuildName
 local gItems = {}
 local hasInit = false
 local defaults = {}
 local gProfile
-
-
 
 -------------------------------------
 -- _G["DB"] = {}
@@ -19,10 +17,8 @@ _G["GuildProfessions"] = GuildProfessions
 _G["profile"] = gProfile
 GUI = _G["GUI"]
 DB = _G.DB
+GDB = _G.GDB
 -- _G["professionsDB"] = gDB
-
-
-
 
 -------------------------------------
 
@@ -34,7 +30,7 @@ EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
     if not hasInit then
-      GuildProfessions:init()
+        GuildProfessions:init()
     end
     if (event == "TRADE_SKILL_UPDATE") then
         SendSyncMessage("trade")
@@ -53,17 +49,44 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
 
 end)
 
-function MessageRecieveHandler(prefix, message, sourceChannel, sourcePlayer)
-    local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
-    local decompressed = LibDeflate:DecompressDeflate(decoded)
-    local success, data = LibSerialize:Deserialize(decompressed)
+function MessageRecieveHandler(prefix, message, sourceChannel, context)
 
-    persistPlayerProfessions(data)
+    if message == nil  and prefix == gPrefix then
+        return
+    end
+    if sourceChannel == "GUILD" then
+        local data = decodeMessage(message)
+        persistPlayerProfessions(data)
+    end
+
+    if sourceChannel == "WHISPER" then
+        if message == 'sync-me' then
+            print("got sync me")
+            local message = {}
+            message["profile"] = gProfile
+            message["db"] = _G.GDB
+            tprint(message)
+            local payload = encodeMessage(message)
+            print(tostring(payload))
+            C_ChatInfo.SendAddonMessage(gPrefix, payload, "WHISPER", context)
+            print("sent data")
+        else
+            local data = decodeMessage(message)
+            print("Thanks for the sync".. data.profile)
+            GuildProfessionPlayersDB = getGuildProfessionPlayersDB or {}
+            GuildProfessionPlayersDB[data.profile] = data.db or {}
+            GUI:Refresh()
+        end
+    end
+
 end
 
 function persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
-    DB:InsertToDB(profession, items, sourcePlayer)
+    print(data)
+    DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
+        GUI:Refresh()
+    end)
 end
 
 function GuildProfessions:GetItemLink(itemId)
@@ -89,20 +112,18 @@ function GuildProfessions:init()
         return
     end
 
-    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+    C_ChatInfo.RegisterAddonMessagePrefix(gPrefix)
 
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
-
-    gProfile = guildName .. " - " ..realmName
-    print(gProfile)
-    DB:init(gProfile, function(boolean) 
+    gRealm = realmName
+    gGuildName = guildName
+    DB:init(gGuildName,gRealm, function(boolean)
         if boolean then
             GUI:init()
             hasInit = true
         end
     end)
-
 
 end
 
@@ -227,8 +248,9 @@ function GetRecipes(prof_type)
 end
 
 function broadCastMessage(items, proff)
+    if items == nil then return end
     local payload = prepareMessage(items, proff)
-    C_ChatInfo.SendAddonMessage(prefix, payload, "WHISPER", playerName)
+    C_ChatInfo.SendAddonMessage(gPrefix, payload, "GUILD")
 end
 
 function prepareMessage(items, proff)
@@ -236,31 +258,67 @@ function prepareMessage(items, proff)
     message["player"] = playerName
     message["profession"] = proff
     message["items"] = items
+    return encodeMessage(message)
+end
+
+function encodeMessage(message)
     local serialized = LibSerialize:Serialize(message)
     local compressed = LibDeflate:CompressDeflate(serialized)
     local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
     return encoded
 end
 
-function GuildProfessions:DeepPrint(e)
-
-    -- items = {
-    --     [itemId] = {
-    --         [reagentId] = 1,
-    --     }
-    -- }
-    if( type(e) == "table") then
-        for k, v in pairs(e) do
-            if type(v) == "table" then
-                print("Key [" .. k .. "]")
-                GuildProfessions:DeepPrint(v)
-            else
-                print("Value [".. tostring(k).."] [ "..tostring(v) .. "]")
-                print("*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*")
-            end
-        end
+function decodeMessage(message)
+    local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
+    local decompressed = LibDeflate:DecompressDeflate(decoded)
+    local success, data = LibSerialize:Deserialize(decompressed)
+    if success then
+        return data
     else
-        print("Value ["..tostring(v) .. "]")
-        print("*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*")
+            
+    print("failed to decode payload")
+    return nil
+    end
+
+end
+function tprint(tbl, indent)
+    if tbl == nil then
+        return
+    end
+    if not indent then
+        indent = 0
+    end
+
+    for k, v in pairs(tbl) do
+        formatting = string.rep("  ", indent) .. k .. ": "
+        if type(v) == "table" then
+            print(formatting)
+            tprint(v, indent + 1)
+        elseif type(v) == 'boolean' then
+            print(formatting .. tostring(v))
+        else
+            print(formatting .. tostring(v))
+        end
     end
 end
+
+local function commands(msg, editbox)
+    local _, _, cmd, args = string.find(msg, "%s?(%w+)%s?(.*)")
+    if cmd == 'reset' then
+        GUI:Refresh()
+    elseif cmd == 'sync' and args ~= "" then
+        print("Syncing professions from player " .. args)
+        C_ChatInfo.SendAddonMessage(gPrefix, "sync-me", "WHISPER", args)
+    elseif cmd == 'help' then
+        print("\n[/fp] To toggle fp UI\n" 
+        .. "[/fp reset] To refresh UI\n" 
+        .. "[/fp sync <player-name>] To Sync db from another player")
+    else
+        GuildProfessions:init()
+        GUI:TOGGLE()
+    end
+end
+
+SLASH_FILTHYPROFESSIONS1, SLASH_FILTHYPROFESSIONS2 = '/fp', '/filthyprofessions'
+
+SlashCmdList["FILTHYPROFESSIONS"] = commands

@@ -5,6 +5,7 @@ local DB = {}
 local font
 local gItemsDB = {}
 
+
 -- https://www.townlong-yak.com/framexml/8.1.5/ObjectAPI/Item.lua#33
 
 ------------PROFFESSIONS DATABASES-----------------------------------------
@@ -57,14 +58,18 @@ function GUI:ReloadDB()
 end
 
 function GUI:Refresh()
-    GUI.frame:Hide()
-    GUI = nil
+    local visible = GUI.UI.frame:IsVisible()
+
+    GUI.UI.frame:Hide()
+    GUI.UI = nil
     gItemsDB = {}
-    DB:InitItems(function() 
-    GUI:ReloadDB()
-    GUI:Create()   
+    GUI_INIT = false
+    DB:Reset(function() 
+        GUI:ReloadDB()
+        GUI:Create()
+        if visible then GUI.UI.frame:Show() end
+
     end)
-    GUI.frame:Show()
 end
 
 function GUI:CreateMainFrame(frameName)
@@ -87,13 +92,13 @@ function Item_Onclick(self)
     if self.detail:IsShown() then
         self.detail:Hide()
     else
-        if GUI.frame.activeDetail ~= nil and GUI.frame.activeDetail:GetName() ~= self.detail:GetName() then
-            GUI.frame.activeDetail.detail:Hide()
+        if GUI.UI.frame.activeDetail ~= nil and GUI.UI.frame.activeDetail:GetName() ~= self.detail:GetName() then
+            GUI.UI.frame.activeDetail.detail:Hide()
         end
         self.detail:Show()
     end
 
-    GUI.frame.activeDetail = self
+    GUI.UI.frame.activeDetail = self
 
 end
 
@@ -133,10 +138,10 @@ function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
     rowFrame:SetScript("OnClick", Item_Onclick)
 
     ---detail window
-    rowFrame.detail = CreateFrame("Frame", "ItemDetailFrame" .. itemLink, GUI.frame, "BasicFrameTemplateWithInset")
-    rowFrame.detail:SetWidth(GUI.frame:GetWidth() - GUI.parentItemFrame:GetWidth())
-    rowFrame.detail:SetHeight(GUI.parentItemFrame:GetHeight())
-    rowFrame.detail:SetPoint("LEFT", GUI.parentItemFrame, "RIGHT", 0, 0)
+    rowFrame.detail = CreateFrame("Frame", "ItemDetailFrame" .. itemLink, GUI.UI.frame, "BasicFrameTemplateWithInset")
+    rowFrame.detail:SetWidth(GUI.UI.frame:GetWidth() - GUI.UI.parentItemFrame:GetWidth())
+    rowFrame.detail:SetHeight(GUI.UI.parentItemFrame:GetHeight())
+    rowFrame.detail:SetPoint("LEFT", GUI.UI.parentItemFrame, "RIGHT", 0, 0)
     rowFrame.detail:Hide()
 
     rowFrame.detail.title = rowFrame.detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
@@ -238,7 +243,7 @@ function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
 
         player = player:CreateFontString(rowFrame, "OVERLAY","GAMETOOLTIPTEXT")
         player:SetPoint("LEFT", 20, 0)
-        player:SetFont(font,18,"OUTLINE")
+        player:SetFont(font,12,"OUTLINE")
         player:SetText(k)
         playersList[k] =  player
     end
@@ -315,7 +320,15 @@ function GUI:CreateCheckBox(frameName, parent, checkBoxText, checked)
 end
 
 function ItemFrame_close(self) 
-    GUI.frame:Hide()
+    GUI.UI.frame:Hide()
+end
+
+function GUI:TOGGLE() 
+    if GUI.UI.frame:IsVisible() then
+        GUI.UI.frame:Hide()
+    else
+        GUI.UI.frame:Show()
+    end
 end
 
 function GUI:Create()
@@ -324,54 +337,54 @@ function GUI:Create()
     end
     GUI_INIT = true
     local frameName = "MAIN_FRAME"
-    GUI.frame = GUI:CreateMainFrame(frameName)
+    GUI.UI = {}
+    GUI.UI.frame = GUI:CreateMainFrame(frameName)
     -- local menuName = "LEFT_MENU"
-    -- GUI.menu = GUI:CreateMenuFrame(menuName, GUI.frame)
+    -- GGUI.UI.menu = GUI:CreateMenuFrame(menuName, GGUI.UI.frame)
 
-    GUI.parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.frame, "BasicFrameTemplateWithInset")
-    GUI.parentItemFrame:SetWidth(GUI.frame:GetWidth() / 3 + 80)
-    GUI.parentItemFrame:SetHeight(GUI.frame:GetHeight())
-    GUI.parentItemFrame:SetPoint("LEFT", GUI.frame, "LEFT")
-    GUI.parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
+    GUI.UI.parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.UI.frame, "BasicFrameTemplateWithInset")
+    GUI.UI.parentItemFrame:SetWidth(GUI.UI.frame:GetWidth() / 3 + 80)
+    GUI.UI.parentItemFrame:SetHeight(GUI.UI.frame:GetHeight())
+    GUI.UI.parentItemFrame:SetPoint("LEFT", GUI.UI.frame, "LEFT")
+    GUI.UI.parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
 
-    GUI.title = GUI.parentItemFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-    GUI.title:SetPoint("TOP", GUI.parentItemFrame, "TOP", 0, -5);
-    GUI.title:SetText("Filthy Professions");
-    GUI.title:SetFont(font, 15, "OUTLINE");
+    GUI.UI.title = GUI.UI.parentItemFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+    GUI.UI.title:SetPoint("TOP", GUI.UI.parentItemFrame, "TOP", 0, -5);
+    GUI.UI.title:SetText("Filthy Professions");
+    GUI.UI.title:SetFont(font, 15, "OUTLINE");
 
-    -- GUI.parentItemFrame = GUI.parentItemFrame:CreateFontString(nil, "OVERLAY");
-    -- GUI.parentItemFrame.title:SetFontObject("GameFontHighlight");
-    -- GUI.parentItemFrame.title:SetPoint("TOP",  GUI.parentItemFrame, "TOP", 5, 0);
-    -- GUI.parentItemFrame.title:SetText("CrenUI Buff Options");
+    -- GGUI.UI.parentItemFrame = GGUI.UI.parentItemFrame:CreateFontString(nil, "OVERLAY");
+    -- GGUI.UI.parentItemFrame.title:SetFontObject("GameFontHighlight");
+    -- GGUI.UI.parentItemFrame.title:SetPoint("TOP",  GGUI.UI.parentItemFrame, "TOP", 5, 0);
+    -- GGUI.UI.parentItemFrame.title:SetText("CrenUI Buff Options");
 
-    GUI.itemFilterMenu = CreateFrame("Frame", "ITEM_FILTER_MENU", GUI.parentItemFrame, "InsetFrameTemplate2")
-    GUI.itemFilterMenu:SetHeight(GUI.parentItemFrame:GetHeight() / 6)
-    GUI.itemFilterMenu:SetWidth(GUI.parentItemFrame:GetWidth() - 10)
-    GUI.itemFilterMenu:SetPoint("TOP", GUI.parentItemFrame, "TOP", 0, -20)
+    GUI.UI.itemFilterMenu = CreateFrame("Frame", "ITEM_FILTER_MENU", GUI.UI.parentItemFrame, "InsetFrameTemplate2")
+    GUI.UI.itemFilterMenu:SetHeight(GUI.UI.parentItemFrame:GetHeight() / 6)
+    GUI.UI.itemFilterMenu:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 10)
+    GUI.UI.itemFilterMenu:SetPoint("TOP", GUI.UI.parentItemFrame, "TOP", 0, -20)
 
     local contenFrameName = "CONTENT_FRAME"
-    GUI.content = GUI:CreateContentFrame(contenFrameName, GUI.parentItemFrame)
-    GUI.content:SetHeight(GUI.parentItemFrame:GetHeight() - GUI.itemFilterMenu:GetHeight())
-    GUI.content:SetWidth(GUI.parentItemFrame:GetWidth() - 40)
-    GUI.content:SetPoint("TOP", GUI.itemFilterMenu, "BOTTOM", -15, 0)
+    GUI.UI.content = GUI:CreateContentFrame(contenFrameName, GUI.UI.parentItemFrame)
+    GUI.UI.content:SetHeight(GUI.UI.parentItemFrame:GetHeight() - GUI.UI.itemFilterMenu:GetHeight())
+    GUI.UI.content:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
+    GUI.UI.content:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
 
     local scrollFrameName = "ITEM_SCROLL_FRAME"
-    GUI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.parentItemFrame, GUI.content)
-    GUI.scrollFrame:SetHeight(GUI.parentItemFrame:GetHeight() - GUI.itemFilterMenu:GetHeight())
-    GUI.scrollFrame:SetWidth(GUI.parentItemFrame:GetWidth() - 40)
-    GUI.scrollFrame:SetPoint("TOP", GUI.itemFilterMenu, "BOTTOM", -15, 0)
+    GUI.UI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.UI.parentItemFrame, GUI.UI.content)
+    GUI.UI.scrollFrame:SetHeight(GUI.UI.parentItemFrame:GetHeight() - GUI.UI.itemFilterMenu:GetHeight())
+    GUI.UI.scrollFrame:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
+    GUI.UI.scrollFrame:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
 
-
-    GUI.items = {}
+    GUI.UI.items = {}
     local firstItem = true
     local i = 1
     for k, v in pairs(EnchantingDB) do
         i = i+1
-        GUI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.content, v)
+        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
         if firstItem == false then
-            GUI.items[i]:SetPoint("TOP", GUI.items[i-1], "BOTTOM")
+            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
         end
         firstItem = false
 
@@ -379,9 +392,9 @@ function GUI:Create()
 
     for k, v in pairs(CookingDB) do
         i = i+1
-        GUI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Cooking" ,GUI.content, v)
+        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Cooking" ,GUI.UI.content, v)
         if firstItem == false then
-            GUI.items[i]:SetPoint("TOP", GUI.items[i-1], "BOTTOM")
+            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
         end
         firstItem = false
 
@@ -389,20 +402,19 @@ function GUI:Create()
 
     for k, v in pairs(FirstAidDB) do
         i = i+1
-        GUI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "First Aid",GUI.content, v)
+        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "First Aid",GUI.UI.content, v)
         if firstItem == false then
-            GUI.items[i]:SetPoint("TOP", GUI.items[i-1], "BOTTOM")
+            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
         end
         firstItem = false
 
     end
 
-
     for k, v in pairs(TailoringDB) do
         i = i+1
-        GUI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Tailoring",GUI.content, v)
+        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Tailoring",GUI.UI.content, v)
         if firstItem == false then
-            GUI.items[i]:SetPoint("TOP", GUI.items[i-1], "BOTTOM")
+            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
         end
         firstItem = false
 
@@ -410,50 +422,49 @@ function GUI:Create()
 
     ----------------PROFESSION CHECKBOXES--------------------
     -- local alchyMyName = "ALCHEMY_BOX"
-    GUI.alchemyBox = GUI:CreateCheckBox("asd", GUI.itemFilterMenu, "Alchemy", true)
-    GUI.alchemyBox:SetPoint("LEFT", GUI.itemFilterMenu, "TOPLEFT", 5, -18)
+    GUI.UI.alchemyBox = GUI:CreateCheckBox("asd", GUI.UI.itemFilterMenu, "Alchemy", true)
+    GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
 
     local blacksmithingName = "BLACKSMITHING_BOX"
-    GUI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingName, GUI.itemFilterMenu, "Black Smithing", true)
+    GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingName, GUI.UI.itemFilterMenu, "Black Smithing", true)
 
     local enchantingName = "ENCHANTING_BOX"
-    GUI.enchantingBox = GUI:CreateCheckBox(enchantingName, GUI.itemFilterMenu, "Enchanting", true)
-    GUI.enchantingBox:SetPoint("LEFT", GUI.blacksmithingBox.text, "RIGHT", 10, 0)
+    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingName, GUI.UI.itemFilterMenu, "Enchanting", true)
+    GUI.UI.enchantingBox:SetPoint("LEFT", GUI.UI.blacksmithingBox.text, "RIGHT", 10, 0)
 
     local engineeringName = "ENGINEERING_BOX"
-    GUI.engineeringBox = GUI:CreateCheckBox(enchantingName,GUI.itemFilterMenu, "Engineering", true)
-    GUI.engineeringBox:SetPoint("TOP", GUI.alchemyBox, "BOTTOM", 0, 0)
+    GUI.UI.engineeringBox = GUI:CreateCheckBox(enchantingName,GUI.UI.itemFilterMenu, "Engineering", true)
+    GUI.UI.engineeringBox:SetPoint("TOP", GUI.UI.alchemyBox, "BOTTOM", 0, 0)
 
 
     local leatherWorking = "LEATHERWORKING_BOX"
-    GUI.leatherWorking = GUI:CreateCheckBox(leatherWorking,GUI.itemFilterMenu, "Leather Working", true)
-    GUI.leatherWorking:SetPoint("LEFT", GUI.engineeringBox.text, "RIGHT", 0, 0)
+    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorking,GUI.UI.itemFilterMenu, "Leather Working", true)
+    GUI.UI.leatherWorking:SetPoint("LEFT", GUI.UI.engineeringBox.text, "RIGHT", 0, 0)
 
 
 
     local tailoring = "TAILORING_BOX"
-    GUI.tailoring = GUI:CreateCheckBox(tailoring,GUI.itemFilterMenu, "Tailoring", true)
+    GUI.UI.tailoring = GUI:CreateCheckBox(tailoring,GUI.UI.itemFilterMenu, "Tailoring", true)
 
 
     local cookingName = "COOKING_BOX"
-    GUI.cookingBox = GUI:CreateCheckBox(cookingName, GUI.itemFilterMenu, "Cooking", true)
-    GUI.cookingBox:SetPoint("TOP", GUI.engineeringBox, "BOTTOM", 0, 0)
+    GUI.UI.cookingBox = GUI:CreateCheckBox(cookingName, GUI.UI.itemFilterMenu, "Cooking", true)
+    GUI.UI.cookingBox:SetPoint("TOP", GUI.UI.engineeringBox, "BOTTOM", 0, 0)
 
     local firstAidName = "FIRSTAID_BOX"
-    GUI.firstAidBox = GUI:CreateCheckBox(firstAidName,GUI.itemFilterMenu, "First Aid", true)
+    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidName,GUI.UI.itemFilterMenu, "First Aid", true)
 
-    GUI.firstAidBox:SetPoint("TOP", GUI.leatherWorking, "BOTTOM", 0, 0)
-    GUI.blacksmithingBox:SetPoint("BOTTOM", GUI.leatherWorking, "TOP", 0, 0)
-    GUI.tailoring:SetPoint("TOP", GUI.enchantingBox, "BOTTOM", 0, 0)
-
+    GUI.UI.firstAidBox:SetPoint("TOP", GUI.UI.leatherWorking, "BOTTOM", 0, 0)
+    GUI.UI.blacksmithingBox:SetPoint("BOTTOM",   GUI.UI.leatherWorking, "TOP", 0, 0)
+    GUI.UI.tailoring:SetPoint("TOP",   GUI.UI.enchantingBox, "BOTTOM", 0, 0)
+  
 
     ---------------------------------------------------------------------------
-
-    GUI.frame:Show()
-    
+    GUI.UI.frame:Hide()
 end
 
 function tprint(tbl, indent)
+    if tbl == nil then return end
     if not indent then
         indent = 0
     end
