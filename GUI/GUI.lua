@@ -305,45 +305,6 @@ function GUI:CreateItems()
     return items
 end
 
-function GUI:GetFilterDB()
-    local FilteredDBs = {}
-
-    for k,v in pairs(filterSettings) do
-        if k == alchemyBOX and v then
-            FilteredDBs["Alchemy"] = AlchemyDB
-        end
-
-        if k == enchantingBOX and v then
-            FilteredDBs["Enchanting"] = EnchantingDB
-        end
-
-        if k == engineeringBOX and v then
-            FilteredDBs["Engineering"] = EngineeringDB
-        end
-
-        if k == leatherWorkingBOX and v then
-            FilteredDBs["Leather Working"] = LeatherWorkingDB
-        end
-
-        if k == blacksmithingBOX and v then
-            FilteredDBs["Black Smithing"] = BlackSmithingDB
-        end
-
-        if k == tailoringBOX and v then
-            FilteredDBs["Tailoring"] = TailoringDB
-        end
-
-        if k == firstAidBOX and v then
-            FilteredDBs["First Aid"] = FirstAidDB
-        end
-
-        if k == cookingBOX and v then
-            FilteredDBs["Cooking"] = CookingDB
-        end
-    end
-    return FilteredDBs
-end
-
 
 function OnItemLeave(self)
     GameTooltip:Hide()
@@ -455,58 +416,6 @@ function GUI:Create()
     GUI.UI.scrollFrame:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
     GUI.UI.scrollFrame:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
-
-    -- for k, v in pairs(EnchantingDB) do
-    --     i = i+1
-    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
-    --     if firstItem == false then
-    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-    --     end
-    --     firstItem = false
-
-    -- end
-
-
-    -- for k, v in pairs(EnchantingDB) do
-    --     i = i+1
-    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
-    --     if firstItem == false then
-    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-    --     end
-    --     firstItem = false
-
-    -- end
-
-    -- for k, v in pairs(CookingDB) do
-    --     i = i+1
-    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Cooking" ,GUI.UI.content, v)
-    --     if firstItem == false then
-    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-    --     end
-    --     firstItem = false
-
-    -- end
-
-    -- for k, v in pairs(FirstAidDB) do
-    --     i = i+1
-    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "First Aid",GUI.UI.content, v)
-    --     if firstItem == false then
-    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-    --     end
-    --     firstItem = false
-
-    -- end
-
-    -- for k, v in pairs(TailoringDB) do
-    --     i = i+1
-    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Tailoring",GUI.UI.content, v)
-    --     if firstItem == false then
-    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-    --     end
-    --     firstItem = false
-
-    -- end
-
     ----------------PROFESSION CHECKBOXES--------------------
     -- local alchyMyName = "ALCHEMY_BOX"firstAidBOX
     GUI.UI.alchemyBox = GUI:CreateCheckBox(alchemyBOX, GUI.UI.itemFilterMenu, "Alchemy", filterSettings[alchemyBOX])
@@ -535,6 +444,48 @@ function GUI:Create()
     GUI.UI.items = GUI:CreateItems()
     GUI.UI.frame:Hide()
 end
+
+
+
+function GUI:GetFilterDB()
+    local FilteredDBs = {}
+
+    for k,v in pairs(filterSettings) do
+        if k == alchemyBOX and v then
+            FilteredDBs["Alchemy"] = AlchemyDB
+        end
+
+        if k == enchantingBOX and v then
+            FilteredDBs["Enchanting"] = EnchantingDB
+        end
+
+        if k == engineeringBOX and v then
+            FilteredDBs["Engineering"] = EngineeringDB
+        end
+
+        if k == leatherWorkingBOX and v then
+            FilteredDBs["Leather Working"] = LeatherWorkingDB
+        end
+
+        if k == blacksmithingBOX and v then
+            FilteredDBs["Black Smithing"] = BlackSmithingDB
+        end
+
+        if k == tailoringBOX and v then
+            FilteredDBs["Tailoring"] = TailoringDB
+        end
+
+        if k == firstAidBOX and v then
+            FilteredDBs["First Aid"] = FirstAidDB
+        end
+
+        if k == cookingBOX and v then
+            FilteredDBs["Cooking"] = CookingDB
+        end
+    end
+    return FilteredDBs
+end
+
 
 function CheckBox_OnClick(self)
     filterSettings[self:GetName()] = self:GetChecked()
