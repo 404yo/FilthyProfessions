@@ -106,9 +106,9 @@ function GuildProfessions:IsPlayerInGuild()
 end
 
 function GuildProfessions:init()
-
+    
     -- guild name doesn't exist on start, stupid right
-    if not GuildProfessions:IsPlayerInGuild() then
+    if not GuildProfessions:IsPlayerInGuild() or hasInit then
         return
     end
 

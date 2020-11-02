@@ -4,11 +4,21 @@ local GuildProfessions = {}
 local DB = {}
 local font
 local gItemsDB = {}
-
+local filterSettings = {} 
 
 -- https://www.townlong-yak.com/framexml/8.1.5/ObjectAPI/Item.lua#33
+---------------------------CHECKBOXES--------------------------------------
+local blacksmithingBOX = "BLACKSMITHING_BOX"
+local enchantingBOX = "ENCHANTING_BOX"
+local engineeringBOX = "ENGINEERING_BOX"
+local leatherWorkingBOX = "LEATHERWORKING_BOX"
+local tailoringBOX = "TAILORING_BOX"
+local cookingBOX = "COOKING_BOX"
+local firstAidBOX = "FIRSTAID_BOX"
+local alchemyBOX = "ALCHEMY_BOX"
 
 ------------PROFFESSIONS DATABASES-----------------------------------------
+
 local AlchemyDB = {}
 local EnchantingDB = {}
 local BlackSmithingDB = {}
@@ -24,7 +34,17 @@ _G["GUI"] = GUI
 ---------------------------------------------------------------------------
 
 function GUI:init()
-
+    print("WTF")
+    filterSettings = {
+        [blacksmithingBOX] = true, 
+        [enchantingBOX] = true, 
+        [engineeringBOX] = true,
+        [leatherWorkingBOX] = true,
+        [tailoringBOX] = true,
+        [cookingBOX] = true,
+        [firstAidBOX] = true,
+        [alchemyBOX] = true,
+    }
     GuildProfessions = _G.GuildProfessions
     GUI:LoadStyling()
     GUI:ReloadDB()
@@ -266,6 +286,64 @@ function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
     return rowFrame
 end
 
+function GUI:CreateItems()
+    local filteredDBs = GUI:GetFilterDB()
+    local firstItem = true
+    local items = {}
+    local i = 0
+    for db_k, db_v in pairs(filteredDBs) do 
+        for k, v in pairs(db_v) do
+            i = i+1
+            items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
+            if firstItem == false then
+                items[i]:SetPoint("TOP", items[i-1], "BOTTOM")
+            end
+            firstItem = false
+        end
+     
+    end 
+    return items
+end
+
+function GUI:GetFilterDB()
+    local FilteredDBs = {}
+
+    for k,v in pairs(filterSettings) do
+        if k == alchemyBOX and v then
+            FilteredDBs["Alchemy"] = AlchemyDB
+        end
+
+        if k == enchantingBOX and v then
+            FilteredDBs["Enchanting"] = EnchantingDB
+        end
+
+        if k == engineeringBOX and v then
+            FilteredDBs["Engineering"] = EngineeringDB
+        end
+
+        if k == leatherWorkingBOX and v then
+            FilteredDBs["Leather Working"] = LeatherWorkingDB
+        end
+
+        if k == blacksmithingBOX and v then
+            FilteredDBs["Black Smithing"] = BlackSmithingDB
+        end
+
+        if k == tailoringBOX and v then
+            FilteredDBs["Tailoring"] = TailoringDB
+        end
+
+        if k == firstAidBOX and v then
+            FilteredDBs["First Aid"] = FirstAidDB
+        end
+
+        if k == cookingBOX and v then
+            FilteredDBs["Cooking"] = CookingDB
+        end
+    end
+    return FilteredDBs
+end
+
 
 function OnItemLeave(self)
     GameTooltip:Hide()
@@ -316,6 +394,7 @@ function GUI:CreateCheckBox(frameName, parent, checkBoxText, checked)
     menu.text:SetFont(font, 12, "OUTLINE, MONOCHROME")
     menu:SetChecked(checked)
     menu:Show()
+    menu:SetScript("OnClick",CheckBox_OnClick)
     return menu
 end
 
@@ -377,90 +456,89 @@ function GUI:Create()
     GUI.UI.scrollFrame:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
 
-    GUI.UI.items = {}
-    local firstItem = true
-    local i = 1
-    for k, v in pairs(EnchantingDB) do
-        i = i+1
-        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
-        if firstItem == false then
-            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-        end
-        firstItem = false
+    -- for k, v in pairs(EnchantingDB) do
+    --     i = i+1
+    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
+    --     if firstItem == false then
+    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
+    --     end
+    --     firstItem = false
 
-    end
+    -- end
 
-    for k, v in pairs(CookingDB) do
-        i = i+1
-        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Cooking" ,GUI.UI.content, v)
-        if firstItem == false then
-            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-        end
-        firstItem = false
 
-    end
+    -- for k, v in pairs(EnchantingDB) do
+    --     i = i+1
+    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
+    --     if firstItem == false then
+    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
+    --     end
+    --     firstItem = false
 
-    for k, v in pairs(FirstAidDB) do
-        i = i+1
-        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "First Aid",GUI.UI.content, v)
-        if firstItem == false then
-            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-        end
-        firstItem = false
+    -- end
 
-    end
+    -- for k, v in pairs(CookingDB) do
+    --     i = i+1
+    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow","Cooking" ,GUI.UI.content, v)
+    --     if firstItem == false then
+    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
+    --     end
+    --     firstItem = false
 
-    for k, v in pairs(TailoringDB) do
-        i = i+1
-        GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Tailoring",GUI.UI.content, v)
-        if firstItem == false then
-            GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
-        end
-        firstItem = false
+    -- end
 
-    end
+    -- for k, v in pairs(FirstAidDB) do
+    --     i = i+1
+    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "First Aid",GUI.UI.content, v)
+    --     if firstItem == false then
+    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
+    --     end
+    --     firstItem = false
+
+    -- end
+
+    -- for k, v in pairs(TailoringDB) do
+    --     i = i+1
+    --     GUI.UI.items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Tailoring",GUI.UI.content, v)
+    --     if firstItem == false then
+    --         GUI.UI.items[i]:SetPoint("TOP", GUI.UI.items[i-1], "BOTTOM")
+    --     end
+    --     firstItem = false
+
+    -- end
 
     ----------------PROFESSION CHECKBOXES--------------------
-    -- local alchyMyName = "ALCHEMY_BOX"
-    GUI.UI.alchemyBox = GUI:CreateCheckBox("asd", GUI.UI.itemFilterMenu, "Alchemy", true)
-    GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
+    -- local alchyMyName = "ALCHEMY_BOX"firstAidBOX
+    GUI.UI.alchemyBox = GUI:CreateCheckBox(alchemyBOX, GUI.UI.itemFilterMenu, "Alchemy", filterSettings[alchemyBOX])
+    GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingBOX, GUI.UI.itemFilterMenu, "Black Smithing", filterSettings[blacksmithingBOX])
+    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingBOX, GUI.UI.itemFilterMenu, "Enchanting", filterSettings[enchantingBOX])
+    GUI.UI.engineeringBox = GUI:CreateCheckBox(engineeringBOX,GUI.UI.itemFilterMenu, "Engineering", filterSettings[engineeringBOX])
+    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorkingBOX,GUI.UI.itemFilterMenu, "Leather Working", filterSettings[leatherWorkingBOX])
+    GUI.UI.tailoring = GUI:CreateCheckBox(tailoringBOX,GUI.UI.itemFilterMenu, "Tailoring", filterSettings[tailoringBOX])
+    GUI.UI.cookingBox = GUI:CreateCheckBox(cookingBOX, GUI.UI.itemFilterMenu, "Cooking", filterSettings[cookingBOX])
+    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidBOX,GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
 
-    local blacksmithingName = "BLACKSMITHING_BOX"
-    GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingName, GUI.UI.itemFilterMenu, "Black Smithing", true)
 
-    local enchantingName = "ENCHANTING_BOX"
-    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingName, GUI.UI.itemFilterMenu, "Enchanting", true)
     GUI.UI.enchantingBox:SetPoint("LEFT", GUI.UI.blacksmithingBox.text, "RIGHT", 10, 0)
-
-    local engineeringName = "ENGINEERING_BOX"
-    GUI.UI.engineeringBox = GUI:CreateCheckBox(enchantingName,GUI.UI.itemFilterMenu, "Engineering", true)
-    GUI.UI.engineeringBox:SetPoint("TOP", GUI.UI.alchemyBox, "BOTTOM", 0, 0)
-
-
-    local leatherWorking = "LEATHERWORKING_BOX"
-    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorking,GUI.UI.itemFilterMenu, "Leather Working", true)
+    GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
     GUI.UI.leatherWorking:SetPoint("LEFT", GUI.UI.engineeringBox.text, "RIGHT", 0, 0)
-
-
-
-    local tailoring = "TAILORING_BOX"
-    GUI.UI.tailoring = GUI:CreateCheckBox(tailoring,GUI.UI.itemFilterMenu, "Tailoring", true)
-
-
-    local cookingName = "COOKING_BOX"
-    GUI.UI.cookingBox = GUI:CreateCheckBox(cookingName, GUI.UI.itemFilterMenu, "Cooking", true)
+    GUI.UI.engineeringBox:SetPoint("TOP", GUI.UI.alchemyBox, "BOTTOM", 0, 0)
     GUI.UI.cookingBox:SetPoint("TOP", GUI.UI.engineeringBox, "BOTTOM", 0, 0)
-
-    local firstAidName = "FIRSTAID_BOX"
-    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidName,GUI.UI.itemFilterMenu, "First Aid", true)
-
     GUI.UI.firstAidBox:SetPoint("TOP", GUI.UI.leatherWorking, "BOTTOM", 0, 0)
     GUI.UI.blacksmithingBox:SetPoint("BOTTOM",   GUI.UI.leatherWorking, "TOP", 0, 0)
     GUI.UI.tailoring:SetPoint("TOP",   GUI.UI.enchantingBox, "BOTTOM", 0, 0)
-  
+
+
 
     ---------------------------------------------------------------------------
+
+    GUI.UI.items = GUI:CreateItems()
     GUI.UI.frame:Hide()
+end
+
+function CheckBox_OnClick(self)
+    filterSettings[self:GetName()] = self:GetChecked()
+    GUI:Refresh()
 end
 
 function tprint(tbl, indent)
