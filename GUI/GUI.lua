@@ -419,14 +419,21 @@ function GUI:Create()
     ----------------PROFESSION CHECKBOXES--------------------
     -- local alchyMyName = "ALCHEMY_BOX"firstAidBOX
     GUI.UI.alchemyBox = GUI:CreateCheckBox(alchemyBOX, GUI.UI.itemFilterMenu, "Alchemy", filterSettings[alchemyBOX])
+    
     GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingBOX, GUI.UI.itemFilterMenu, "Black Smithing", filterSettings[blacksmithingBOX])
-    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingBOX, GUI.UI.itemFilterMenu, "Enchanting", filterSettings[enchantingBOX])
-    GUI.UI.engineeringBox = GUI:CreateCheckBox(engineeringBOX,GUI.UI.itemFilterMenu, "Engineering", filterSettings[engineeringBOX])
-    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorkingBOX,GUI.UI.itemFilterMenu, "Leather Working", filterSettings[leatherWorkingBOX])
-    GUI.UI.tailoring = GUI:CreateCheckBox(tailoringBOX,GUI.UI.itemFilterMenu, "Tailoring", filterSettings[tailoringBOX])
-    GUI.UI.cookingBox = GUI:CreateCheckBox(cookingBOX, GUI.UI.itemFilterMenu, "Cooking", filterSettings[cookingBOX])
-    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidBOX,GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
 
+    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingBOX, GUI.UI.itemFilterMenu, "Enchanting", filterSettings[enchantingBOX])
+
+    GUI.UI.engineeringBox = GUI:CreateCheckBox(engineeringBOX,GUI.UI.itemFilterMenu, "Engineering", filterSettings[engineeringBOX])
+
+    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorkingBOX,GUI.UI.itemFilterMenu, "Leather Working", filterSettings[leatherWorkingBOX])
+
+    GUI.UI.tailoring = GUI:CreateCheckBox(tailoringBOX,GUI.UI.itemFilterMenu, "Tailoring", filterSettings[tailoringBOX])
+
+    GUI.UI.cookingBox = GUI:CreateCheckBox(cookingBOX, GUI.UI.itemFilterMenu, "Cooking", filterSettings[cookingBOX])
+
+    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidBOX,GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
+    
 
     GUI.UI.enchantingBox:SetPoint("LEFT", GUI.UI.blacksmithingBox.text, "RIGHT", 10, 0)
     GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
