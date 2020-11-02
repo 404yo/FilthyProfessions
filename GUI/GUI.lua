@@ -27,7 +27,7 @@ local TailoringDB = {}
 local LeatherWorkingDB = {}
 local FirstAidDB = {}
 local CookingDB = {}
----------------------------------------------------------------------------
+
 ----------------------------GLOBALS----------------------------------------
 _G["GUI"] = GUI
 
@@ -54,14 +54,6 @@ end
 
 function GUI:LoadStyling()
     font = "Fonts\\FRIZQT__.ttf"
-end
-
-
-function UIMenuButton_OnLoad()
-    -- this:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-    -- this:RegisterEvent("UNIT_QUEST_LOG_CHANGED");
-    -- this:RegisterEvent("PARTY_MEMBER_ENABLE");
-    -- this:RegisterEvent("PARTY_MEMBER_DISABLE");
 end
 
 function GUI:ReloadDB()
@@ -379,8 +371,6 @@ function GUI:Create()
     local frameName = "MAIN_FRAME"
     GUI.UI = {}
     GUI.UI.frame = GUI:CreateMainFrame(frameName)
-    -- local menuName = "LEFT_MENU"
-    -- GGUI.UI.menu = GUI:CreateMenuFrame(menuName, GGUI.UI.frame)
 
     GUI.UI.parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.UI.frame, "BasicFrameTemplateWithInset")
     GUI.UI.parentItemFrame:SetWidth(GUI.UI.frame:GetWidth() / 3 + 80)
@@ -393,11 +383,6 @@ function GUI:Create()
     GUI.UI.title:SetText("Filthy Professions");
     GUI.UI.title:SetFont(font, 15, "OUTLINE");
 
-    -- GGUI.UI.parentItemFrame = GGUI.UI.parentItemFrame:CreateFontString(nil, "OVERLAY");
-    -- GGUI.UI.parentItemFrame.title:SetFontObject("GameFontHighlight");
-    -- GGUI.UI.parentItemFrame.title:SetPoint("TOP",  GGUI.UI.parentItemFrame, "TOP", 5, 0);
-    -- GGUI.UI.parentItemFrame.title:SetText("CrenUI Buff Options");
-
     GUI.UI.itemFilterMenu = CreateFrame("Frame", "ITEM_FILTER_MENU", GUI.UI.parentItemFrame, "InsetFrameTemplate2")
     GUI.UI.itemFilterMenu:SetHeight(GUI.UI.parentItemFrame:GetHeight() / 6)
     GUI.UI.itemFilterMenu:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 10)
@@ -409,7 +394,6 @@ function GUI:Create()
     GUI.UI.content:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
     GUI.UI.content:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
-
     local scrollFrameName = "ITEM_SCROLL_FRAME"
     GUI.UI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.UI.parentItemFrame, GUI.UI.content)
     GUI.UI.scrollFrame:SetHeight(GUI.UI.parentItemFrame:GetHeight() - GUI.UI.itemFilterMenu:GetHeight())
@@ -417,7 +401,6 @@ function GUI:Create()
     GUI.UI.scrollFrame:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
     ----------------PROFESSION CHECKBOXES--------------------
-    -- local alchyMyName = "ALCHEMY_BOX"firstAidBOX
     GUI.UI.alchemyBox = GUI:CreateCheckBox(alchemyBOX, GUI.UI.itemFilterMenu, "Alchemy", filterSettings[alchemyBOX])
     
     GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingBOX, GUI.UI.itemFilterMenu, "Black Smithing", filterSettings[blacksmithingBOX])
@@ -433,7 +416,7 @@ function GUI:Create()
     GUI.UI.cookingBox = GUI:CreateCheckBox(cookingBOX, GUI.UI.itemFilterMenu, "Cooking", filterSettings[cookingBOX])
 
     GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidBOX,GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
-    
+
 
     GUI.UI.enchantingBox:SetPoint("LEFT", GUI.UI.blacksmithingBox.text, "RIGHT", 10, 0)
     GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
@@ -443,8 +426,6 @@ function GUI:Create()
     GUI.UI.firstAidBox:SetPoint("TOP", GUI.UI.leatherWorking, "BOTTOM", 0, 0)
     GUI.UI.blacksmithingBox:SetPoint("BOTTOM",   GUI.UI.leatherWorking, "TOP", 0, 0)
     GUI.UI.tailoring:SetPoint("TOP",   GUI.UI.enchantingBox, "BOTTOM", 0, 0)
-
-
 
     ---------------------------------------------------------------------------
 

@@ -67,7 +67,7 @@ function MessageRecieveHandler(prefix, message, sourceChannel, context)
             message["db"] = _G.GDB
             tprint(message)
             local payload = encodeMessage(message)
-            print(tostring(payload))
+            --TODO send CHUNS and not the whole payload [Chunks of professions]
             C_ChatInfo.SendAddonMessage(gPrefix, payload, "WHISPER", context)
             print("sent data")
         else
