@@ -1,0 +1,13 @@
+## Interface: 11305
+## Title: FilthyProfessions
+## Author: BabyMoses
+## Version: 0.1
+## SavedVariables: FilthyProfessionsPlayerProfile FilthyProfessionsPlayersDB
+
+#@no-lib-strip@
+libs.xml
+#@end-no-lib-strip@
+
+DB.lua
+GUI\GUI.lua
+FilthyProfessions.lua
