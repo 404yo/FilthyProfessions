@@ -4,7 +4,7 @@ local FilthyProfessions = {}
 local DB = {}
 local font
 local gItemsDB = {}
-local filterSettings = {} 
+local filterSettings = {}
 
 -- https://www.townlong-yak.com/framexml/8.1.5/ObjectAPI/Item.lua#33
 ---------------------------CHECKBOXES--------------------------------------
@@ -36,14 +36,14 @@ _G["GUI"] = GUI
 function GUI:init()
     print("WTF")
     filterSettings = {
-        [blacksmithingBOX] = true, 
-        [enchantingBOX] = true, 
+        [blacksmithingBOX] = true,
+        [enchantingBOX] = true,
         [engineeringBOX] = true,
         [leatherWorkingBOX] = true,
         [tailoringBOX] = true,
         [cookingBOX] = true,
         [firstAidBOX] = true,
-        [alchemyBOX] = true,
+        [alchemyBOX] = true
     }
     FilthyProfessions = _G.FilthyProfessions
     GUI:LoadStyling()
@@ -71,15 +71,16 @@ end
 
 function GUI:Refresh()
     local visible = GUI.UI.frame:IsVisible()
-
     GUI.UI.frame:Hide()
     GUI.UI = nil
     gItemsDB = {}
     GUI_INIT = false
-    DB:Reset(function() 
+    DB:Reset(function()
         GUI:ReloadDB()
         GUI:Create()
-        if visible then GUI.UI.frame:Show() end
+        if visible then
+            GUI.UI.frame:Show()
+        end
 
     end)
 end
@@ -88,33 +89,156 @@ function GUI:CreateMainFrame(frameName)
     local frame = CreateFrame("Frame", frameName, UIParent)
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER")
-    frame:SetWidth(800)
-    frame:SetHeight(500) 
-    frame:SetMovable(true)
+    frame:SetWidth(346)
+    frame:SetHeight(500)
+
+
+    frame:SetToplevel(false)
     frame:EnableMouse(true)
+    frame:SetMovable(true)
     frame:RegisterForDrag("LeftButton", "RightButton")
-    frame:SetToplevel(true)
-    frame:SetClampedToScreen(true)
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetClampedToScreen(false)
     frame:Show()
     return frame
 end
 
-
 function Item_Onclick(self)
-    if self.detail:IsShown() then
-        self.detail:Hide()
+    if  GUI.UI.detail == nil then
+        GUI.UI.detail = GUI:CreateRowDetailWindow(self,self.players,self.reagents,self.itemTexture,self.itemLink)
+        GUI.UI.detail:Show()
+    elseif GUI.UI.detail.itemLink ~= self.itemLink then
+        GUI.UI.detail:Hide()
+        GUI.UI.detail = nil
+        GUI.UI.detail = GUI:CreateRowDetailWindow(self,self.players,self.reagents,self.itemTexture,self.itemLink)
+        GUI.UI.detail:Show()
     else
-        if GUI.UI.frame.activeDetail ~= nil and GUI.UI.frame.activeDetail:GetName() ~= self.detail:GetName() then
-            GUI.UI.frame.activeDetail.detail:Hide()
-        end
-        self.detail:Show()
+        GUI.UI.detail:Hide()
+        GUI.UI.detail = nil
     end
-
-    GUI.UI.frame.activeDetail = self
 
 end
 
-function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
+function GUI:CreateRowDetailWindow(parent, players,reagents,itemTexture,itemLink)
+        
+        ---detail window
+        local detail = CreateFrame("Frame", "ItemDetailFrame" .. itemLink, GUI.UI.frame, "BasicFrameTemplateWithInset")
+        detail:SetWidth(400)
+        detail:SetHeight(GUI.UI.parentItemFrame:GetHeight())
+        detail:SetPoint("LEFT", GUI.UI.parentItemFrame, "RIGHT", 0, 0)
+        detail:Hide()
+        detail:RegisterForDrag("LeftButton", "RightButton")
+        detail:SetScript("OnDragStart", GUI.UI.frame.StartMoving)
+        detail:SetScript("OnDragStop",  GUI.UI.frame.StopMovingOrSizing)
+        detail:SetToplevel(true)
+        detail:EnableMouse(true)
+        detail:SetMovable(true)
+        detail:SetClampedToScreen(false)
+        detail.itemLink = itemLink
+    
+        detail.title = detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        detail.title:SetPoint("TOP", detail, "TOP", 0, -5);
+        detail.title:SetText(itemLink);
+        detail.title:SetFont(font, 12, "OUTLINE");
+    
+        -- item info
+        detail.info = CreateFrame("Frame", "ItemInfoRow" .. itemLink, detail)
+        detail.info:SetWidth(detail:GetWidth() - 10)
+        detail.info:SetHeight(detail:GetHeight() / 5 - 10)
+        detail.info:SetPoint("TOP", detail, "TOP", 0, -25)
+        -- icon
+        detail.info.icon = detail.info:CreateTexture("ItemInfoRow" .. itemLink .. "_icon")
+        detail.info.icon:SetPoint("LEFT", detail.info, "LEFT", 10, -10)
+        detail.info.icon:SetHeight(40)
+        detail.info.icon:SetWidth(40)
+        detail.info.icon:SetTexture(itemTexture)
+    
+        -- reagents window
+        detail.reagents = CreateFrame("Frame", "regeantRow" .. itemLink, detail)
+        detail.reagents:SetWidth(detail:GetWidth() / 2 - 5)
+        detail.reagents:SetHeight(detail:GetHeight() - detail.info:GetHeight() - 25)
+        detail.reagents:SetPoint("TOPLEFT", detail.info, "BOTTOMLEFT", 0, 0)
+    
+        detail.reagents.title = detail.reagents:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        detail.reagents.title:SetPoint("TOPLEFT", detail.reagents, "TOPLEFT", 8, -10);
+        detail.reagents.title:SetText("Reagents");
+        detail.reagents.title:SetFont(font, 25, "OUTLINE");
+    
+        local first = true
+        local reagentTable = {}
+        for k, v in pairs(reagents) do
+            local itemLink, itemIcon, reagentID, count, itemCount = unpack(v)
+            local reagent = CreateFrame("Button", "player" .. itemLink, detail.reagents)
+    
+            reagent:SetWidth((detail.reagents:GetWidth() - 4))
+            reagent:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+            reagent:SetHeight((detail.reagents:GetHeight() - 4) / 22)
+    
+            if first then
+                reagent:SetPoint("TOP", detail.reagents, "TOP", 0, -50)
+                first = false
+            else
+                reagent:SetPoint("TOP", reagentTable[#reagentTable], "BOTTOM", 0, -5)
+            end
+    
+            reagent.icon = reagent:CreateTexture("ItemInfoRow" .. itemLink .. "_icon")
+            reagent.icon:SetPoint("LEFT", reagent, "LEFT", 8, 0)
+            reagent.icon:SetHeight(20)
+            reagent.icon:SetWidth(20)
+            reagent.icon:SetTexture(itemIcon)
+    
+            reagent.text = reagent:CreateFontString(font,"OVERLAY", "GAMETOOLTIPTEXT")
+            reagent.text:SetFont(font, 10, "OUTLINE");
+            reagent.text:SetPoint("LEFT", reagent.icon, "RIGHT", 2, 0)
+    
+            local itemCountString
+            if tonumber(count) <= tonumber(itemCount) then
+                itemCountString = "|cFF00FF00" .. itemCount .. "|r"
+            else
+                itemCountString = "|cFFFF0000" .. itemCount .. "|r"
+            end
+            reagent.text:SetText(itemLink .. " x " .. count .. "[" .. itemCountString .. "]")
+    
+            reagent.itemLink = itemLink
+            reagent:SetScript("OnEnter", OnItemEnter)
+            reagent:SetScript("OnLeave", OnItemLeave)
+    
+            reagentTable[k] = reagent
+    
+        end
+        detail.reagentsList = reagentTable;
+    
+        -- players window
+        detail.players = CreateFrame("Frame", "playersRow" .. itemLink, detail)
+        detail.players:SetWidth(detail:GetWidth() / 2 - 5)
+        detail.players:SetHeight((detail:GetHeight() - detail.info:GetHeight() - 25) / 2)
+        detail.players:SetPoint("TOPRIGHT", detail.info, "BOTTOMRIGHt", 0, 0)
+    
+        detail.players.title = detail.players:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+        detail.players.title:SetPoint("TOP", detail.players, "TOP", -43, -5);
+        detail.players.title:SetText("Players");
+        detail.players.title:SetFont(font, 25, "OUTLINE");
+    
+        local playersList = {}
+        for k, v in pairs(players) do
+            local player = CreateFrame("Button", "player" .. k, detail.players)
+            player:SetWidth((detail.players:GetWidth() - 4))
+            player:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+            player:SetHeight((detail.players:GetHeight() - 4) / 18)
+            player:SetPoint("TOP", detail.players, "TOP", 0, -50)
+    
+            player = player:CreateFontString( parent,"OVERLAY", "GAMETOOLTIPTEXT")
+            player:SetPoint("LEFT", 20, 0)
+            player:SetFont(font, 12, "OUTLINE")
+            player:SetText(k)
+            playersList[k] = player
+        end
+        detail.players = playersList;
+        return detail
+end
+
+function GUI:CreateItemButtonFrame(frameName, profession, parent, itemData)
 
     local item, regeants, players = unpack(itemData)
     local itemLink = item[1]
@@ -132,6 +256,9 @@ function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
     rowFrame:SetPoint("TOP", parent, "TOP", 0, 0)
     rowFrame.itemLink = itemLink
     rowFrame.itemID = itemID
+    rowFrame.itemTexture = itemTexture
+    rowFrame.reagents = reagents
+    rowFrame.players = players
     rowFrame.profession = profession
 
     -- row icon
@@ -148,130 +275,8 @@ function GUI:CreateItemButtonFrame(frameName,profession, parent, itemData)
 
     rowFrame:RegisterForClicks("AnyDown")
     rowFrame:SetScript("OnClick", Item_Onclick)
-
-    ---detail window
-    rowFrame.detail = CreateFrame("Frame", "ItemDetailFrame" .. itemLink, GUI.UI.frame, "BasicFrameTemplateWithInset")
-    rowFrame.detail:SetWidth(GUI.UI.frame:GetWidth() - GUI.UI.parentItemFrame:GetWidth())
-    rowFrame.detail:SetHeight(GUI.UI.parentItemFrame:GetHeight())
-    rowFrame.detail:SetPoint("LEFT", GUI.UI.parentItemFrame, "RIGHT", 0, 0)
-    rowFrame.detail:Hide()
-
-    rowFrame.detail.title = rowFrame.detail:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-    rowFrame.detail.title:SetPoint("TOP", rowFrame.detail, "TOP", 0, -5);
-    rowFrame.detail.title:SetText(itemLink);
-    rowFrame.detail.title:SetFont(font, 12, "OUTLINE");
-
-
-    -- item info
-    rowFrame.detail.info = CreateFrame("Frame", "ItemInfoRow" .. itemLink, rowFrame.detail)
-    rowFrame.detail.info:SetWidth(rowFrame.detail:GetWidth() - 10)
-    rowFrame.detail.info:SetHeight(rowFrame.detail:GetHeight() / 5 - 10)
-    rowFrame.detail.info:SetPoint("TOP", rowFrame.detail, "TOP", 0, -25)
-    -- icon
-    rowFrame.detail.info.icon = rowFrame.detail.info:CreateTexture("ItemInfoRow" .. itemLink .. "_icon")
-    rowFrame.detail.info.icon:SetPoint("LEFT", rowFrame.detail.info, "LEFT", 10, -10)
-    rowFrame.detail.info.icon:SetHeight(40)
-    rowFrame.detail.info.icon:SetWidth(40)
-    rowFrame.detail.info.icon:SetTexture(itemTexture)
-
-    -- reagents window
-    rowFrame.detail.reagents = CreateFrame("Frame", "regeantRow" .. itemLink, rowFrame.detail)
-    rowFrame.detail.reagents:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
-    rowFrame.detail.reagents:SetHeight(rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25)
-    rowFrame.detail.reagents:SetPoint("TOPLEFT", rowFrame.detail.info, "BOTTOMLEFT", 0, 0)
-
-
-    rowFrame.detail.reagents.title = rowFrame.detail.reagents:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-    rowFrame.detail.reagents.title:SetPoint("TOPLEFT", rowFrame.detail.reagents, "TOPLEFT", 8, -10);
-    rowFrame.detail.reagents.title:SetText("Reagents");
-    rowFrame.detail.reagents.title:SetFont(font, 25, "OUTLINE");
-
-
-
-    local first = true
-    local reagentTable = {}
-    for k, v in pairs(reagents) do
-        local itemLink, itemIcon,reagentID, count, itemCount = unpack(v)
-        local reagent = CreateFrame("Button", "player" .. itemLink, rowFrame.detail.reagents)
-        
-        reagent:SetWidth((rowFrame.detail.reagents:GetWidth() - 4))
-        reagent:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-        reagent:SetHeight((rowFrame.detail.reagents:GetHeight() - 4) / 22)
-
-        if first then
-            reagent:SetPoint("TOP", rowFrame.detail.reagents, "TOP", 0, -50)
-            first = false
-        else
-            reagent:SetPoint("TOP", reagentTable[#reagentTable], "BOTTOM", 0, -5)
-        end
-
-        
-        reagent.icon = reagent:CreateTexture("ItemInfoRow" .. itemLink .. "_icon")
-        reagent.icon:SetPoint("LEFT", reagent, "LEFT", 8, 0)
-        reagent.icon:SetHeight(20)
-        reagent.icon:SetWidth(20)
-        reagent.icon:SetTexture(itemIcon)
-
-
-        reagent.text = reagent:CreateFontString(rowFrame, "OVERLAY", "GAMETOOLTIPTEXT")
-        reagent.text:SetPoint("LEFT", reagent.icon, "RIGHT", 2, 0)
-
-        local itemCountString
-        if tonumber(count) <=  tonumber(itemCount) then
-            itemCountString = "|cFF00FF00" ..itemCount.."|r"
-        else
-            itemCountString = "|cFFFF0000" ..itemCount.."|r"
-        end
-        reagent.text:SetText(itemLink .. " x " .. count .."[" ..itemCountString.."]")
-
-
-        reagent.itemLink = itemLink
-        reagent:SetScript("OnEnter",OnItemEnter)
-        reagent:SetScript("OnLeave",OnItemLeave)
-
-        reagentTable[k] = reagent
-
-    end
-    rowFrame.reagentsList = reagentTable;
-
-    -- players window
-    rowFrame.detail.players = CreateFrame("Frame", "playersRow" .. itemLink, rowFrame.detail)
-    rowFrame.detail.players:SetWidth(rowFrame.detail:GetWidth() / 2 - 5)
-    rowFrame.detail.players:SetHeight((rowFrame.detail:GetHeight() - rowFrame.detail.info:GetHeight() - 25) / 2)
-    rowFrame.detail.players:SetPoint("TOPRIGHT", rowFrame.detail.info, "BOTTOMRIGHt", 0, 0)
-   
-    rowFrame.detail.players.title = rowFrame.detail.players:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-    rowFrame.detail.players.title:SetPoint("TOP", rowFrame.detail.players, "TOP", -43, -5);
-    rowFrame.detail.players.title:SetText("Players");
-    rowFrame.detail.players.title:SetFont(font, 25, "OUTLINE");
-
-    local playersList =  {}
-    for k, v in pairs(players) do
-        local player = CreateFrame("Button", "player" .. k, rowFrame.detail.players)
-        player:SetWidth((rowFrame.detail.players:GetWidth() - 4))
-        player:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-        player:SetHeight((rowFrame.detail.players:GetHeight() - 4) / 18)
-        player:SetPoint("TOP", rowFrame.detail.players, "TOP", 0, -50)
-
-        player = player:CreateFontString(rowFrame, "OVERLAY","GAMETOOLTIPTEXT")
-        player:SetPoint("LEFT", 20, 0)
-        player:SetFont(font,12,"OUTLINE")
-        player:SetText(k)
-        playersList[k] =  player
-    end
-
-    rowFrame.players = playersList;
-
-    -- total cost row (Should get info form auctioneer house)
-
-    -- tab row pin an item, your think about to make (should be able to display in another tab with all other pinned)
-    
-    rowFrame.detail.text = rowFrame.detail:CreateFontString(rowFrame.detail.bg, "OVERLAY", "GAMETOOLTIPTEXT")
-    rowFrame.detail.text:SetPoint("CENTER", 20, 0)
-    rowFrame.detail.text:SetText(itemData[0])
-
-    rowFrame:SetScript("OnEnter",OnItemEnter)
-    rowFrame:SetScript("OnLeave",OnItemLeave)
+    rowFrame:SetScript("OnEnter", OnItemEnter)
+    rowFrame:SetScript("OnLeave", OnItemLeave)
 
     rowFrame:Show()
 
@@ -283,30 +288,29 @@ function GUI:CreateItems()
     local firstItem = true
     local items = {}
     local i = 0
-    for db_k, db_v in pairs(filteredDBs) do 
+    for db_k, db_v in pairs(filteredDBs) do
         for k, v in pairs(db_v) do
-            i = i+1
-            items[i] = GUI:CreateItemButtonFrame("firstItemRow","Enchanting", GUI.UI.content, v)
+            i = i + 1
+            items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Enchanting", GUI.UI.content, v)
             if firstItem == false then
-                items[i]:SetPoint("TOP", items[i-1], "BOTTOM")
+                items[i]:SetPoint("TOP", items[i - 1], "BOTTOM")
             end
             firstItem = false
         end
-     
-    end 
+
+    end
     return items
 end
-
 
 function OnItemLeave(self)
     GameTooltip:Hide()
 end
 
-function OnItemEnter(self) 
-    GameTooltip:SetOwner(self, "ANCHOR_CURSOR"); 
+function OnItemEnter(self)
+    GameTooltip:SetOwner(self, "ANCHOR_CURSOR");
     GameTooltip:ClearLines();
-    if self.profession == "Enchanting" then 
-        GameTooltip:SetHyperlink("spell:"..self.itemID)
+    if self.profession == "Enchanting" then
+        GameTooltip:SetHyperlink("spell:" .. self.itemID)
     else
         GameTooltip:SetHyperlink(self.itemLink)
     end
@@ -347,15 +351,15 @@ function GUI:CreateCheckBox(frameName, parent, checkBoxText, checked)
     menu.text:SetFont(font, 12, "OUTLINE, MONOCHROME")
     menu:SetChecked(checked)
     menu:Show()
-    menu:SetScript("OnClick",CheckBox_OnClick)
+    menu:SetScript("OnClick", CheckBox_OnClick)
     return menu
 end
 
-function ItemFrame_close(self) 
+function ItemFrame_close(self)
     GUI.UI.frame:Hide()
 end
 
-function GUI:TOGGLE() 
+function GUI:TOGGLE()
     if GUI.UI.frame:IsVisible() then
         GUI.UI.frame:Hide()
     else
@@ -373,7 +377,7 @@ function GUI:Create()
     GUI.UI.frame = GUI:CreateMainFrame(frameName)
 
     GUI.UI.parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.UI.frame, "BasicFrameTemplateWithInset")
-    GUI.UI.parentItemFrame:SetWidth(GUI.UI.frame:GetWidth() / 3 + 80)
+    GUI.UI.parentItemFrame:SetWidth(346)
     GUI.UI.parentItemFrame:SetHeight(GUI.UI.frame:GetHeight())
     GUI.UI.parentItemFrame:SetPoint("LEFT", GUI.UI.frame, "LEFT")
     GUI.UI.parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
@@ -402,21 +406,26 @@ function GUI:Create()
 
     ----------------PROFESSION CHECKBOXES--------------------
     GUI.UI.alchemyBox = GUI:CreateCheckBox(alchemyBOX, GUI.UI.itemFilterMenu, "Alchemy", filterSettings[alchemyBOX])
-    
-    GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingBOX, GUI.UI.itemFilterMenu, "Black Smithing", filterSettings[blacksmithingBOX])
 
-    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingBOX, GUI.UI.itemFilterMenu, "Enchanting", filterSettings[enchantingBOX])
+    GUI.UI.blacksmithingBox = GUI:CreateCheckBox(blacksmithingBOX, GUI.UI.itemFilterMenu, "Black Smithing",
+                                  filterSettings[blacksmithingBOX])
 
-    GUI.UI.engineeringBox = GUI:CreateCheckBox(engineeringBOX,GUI.UI.itemFilterMenu, "Engineering", filterSettings[engineeringBOX])
+    GUI.UI.enchantingBox = GUI:CreateCheckBox(enchantingBOX, GUI.UI.itemFilterMenu, "Enchanting",
+                               filterSettings[enchantingBOX])
 
-    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorkingBOX,GUI.UI.itemFilterMenu, "Leather Working", filterSettings[leatherWorkingBOX])
+    GUI.UI.engineeringBox = GUI:CreateCheckBox(engineeringBOX, GUI.UI.itemFilterMenu, "Engineering",
+                                filterSettings[engineeringBOX])
 
-    GUI.UI.tailoring = GUI:CreateCheckBox(tailoringBOX,GUI.UI.itemFilterMenu, "Tailoring", filterSettings[tailoringBOX])
+    GUI.UI.leatherWorking = GUI:CreateCheckBox(leatherWorkingBOX, GUI.UI.itemFilterMenu, "Leather Working",
+                                filterSettings[leatherWorkingBOX])
+
+    GUI.UI.tailoring =
+        GUI:CreateCheckBox(tailoringBOX, GUI.UI.itemFilterMenu, "Tailoring", filterSettings[tailoringBOX])
 
     GUI.UI.cookingBox = GUI:CreateCheckBox(cookingBOX, GUI.UI.itemFilterMenu, "Cooking", filterSettings[cookingBOX])
 
-    GUI.UI.firstAidBox = GUI:CreateCheckBox(firstAidBOX,GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
-
+    GUI.UI.firstAidBox =
+        GUI:CreateCheckBox(firstAidBOX, GUI.UI.itemFilterMenu, "First Aid", filterSettings[firstAidBOX])
 
     GUI.UI.enchantingBox:SetPoint("LEFT", GUI.UI.blacksmithingBox.text, "RIGHT", 10, 0)
     GUI.UI.alchemyBox:SetPoint("LEFT", GUI.UI.itemFilterMenu, "TOPLEFT", 5, -18)
@@ -424,8 +433,8 @@ function GUI:Create()
     GUI.UI.engineeringBox:SetPoint("TOP", GUI.UI.alchemyBox, "BOTTOM", 0, 0)
     GUI.UI.cookingBox:SetPoint("TOP", GUI.UI.engineeringBox, "BOTTOM", 0, 0)
     GUI.UI.firstAidBox:SetPoint("TOP", GUI.UI.leatherWorking, "BOTTOM", 0, 0)
-    GUI.UI.blacksmithingBox:SetPoint("BOTTOM",   GUI.UI.leatherWorking, "TOP", 0, 0)
-    GUI.UI.tailoring:SetPoint("TOP",   GUI.UI.enchantingBox, "BOTTOM", 0, 0)
+    GUI.UI.blacksmithingBox:SetPoint("BOTTOM", GUI.UI.leatherWorking, "TOP", 0, 0)
+    GUI.UI.tailoring:SetPoint("TOP", GUI.UI.enchantingBox, "BOTTOM", 0, 0)
 
     ---------------------------------------------------------------------------
 
@@ -433,12 +442,10 @@ function GUI:Create()
     GUI.UI.frame:Hide()
 end
 
-
-
 function GUI:GetFilterDB()
     local FilteredDBs = {}
 
-    for k,v in pairs(filterSettings) do
+    for k, v in pairs(filterSettings) do
         if k == alchemyBOX and v then
             FilteredDBs["Alchemy"] = AlchemyDB
         end
@@ -474,14 +481,15 @@ function GUI:GetFilterDB()
     return FilteredDBs
 end
 
-
 function CheckBox_OnClick(self)
     filterSettings[self:GetName()] = self:GetChecked()
     GUI:Refresh()
 end
 
 function tprint(tbl, indent)
-    if tbl == nil then return end
+    if tbl == nil then
+        return
+    end
     if not indent then
         indent = 0
     end
