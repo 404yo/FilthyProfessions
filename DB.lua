@@ -1,4 +1,3 @@
-
 --[[
 
 
@@ -11,7 +10,8 @@ Init the ItemDB, itemlinks and what not
 
 
 
-]]--
+]] --
+
 local DB = {}
 local GuildProfessions = {}
 --------------GLOBALS--------------------------
@@ -24,11 +24,6 @@ _G["ItemsDB"] = gItemsDB
 _G["GDB"] = gDB
 _G["DB"] = DB
 GuildProfessions = _G.GuildProfessions
------------------------------------------------
-
-
-------------PROFFESSIONS DATABASES-------------
-
 -----------------------------------------------
 
 
@@ -49,40 +44,156 @@ function DB:Reset(callback)
     end)
 end
 
+function DB:GetRealmDB()
+        gDB[gRealmName] = DB:GetDB()[gRealmName]
+    return gDB[gRealmName] or {}
+end
 
-function DB:LoadProfessions()
+function DB:GetDB()
+    GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
+    GuildProfessionPlayersDB[gRealmName] = GuildProfessionPlayersDB[gRealmName] or {}
+    GuildProfessionPlayersDB[gRealmName].professions = GuildProfessionPlayersDB[gRealmName].professions or {}
+    local db = GuildProfessionPlayersDB
+    return db
+end
+
+function DB:StoreDB()
+    GuildProfessionPlayersDB = gDB or {}
+end
+
+function DB:Commit(db)
+    if db ~= nil then
+    end
+    GuildProfessionPlayersDB = db
+end
+
+function DB:CommitProfessions(professions)
+    local db = DB:GetDB()
+    db[gRealmName].professions = professions
+    DB:Commit(db)
+end
+
+function DB:GetProfessionsDB()
+    local db = DB:GetDB()
+    return db[gRealmName].professions or  {}
+end
+
+function isTableEmpty(table)
+
+    local next = next
+    if next(table) == nil then
+        return true
+    end
+    return false
 
 end
 
-function GetItemData(itemID,proffesion, callback) 
-    local itemLink
-    local itemLevel
-    local icon
+function DB:InsertAlienDB(alienDB)
+    -- db is not of this realm, spooky i know :(
+    if alienDB[gRealmName] == nil then
+        return
+    end
+    -- empty db, sad face :(
+    if alienDB[gRealmName].professions == nil then
+        return
+    end
 
-    if proffesion == "Enchanting" then  
-        icon =  GetSpellTexture(itemID)
-        local item2 = Spell:CreateFromSpellID(tonumber(itemID))
-        item2:ContinueOnSpellLoad(function()
-            --- get reagents
-            itemLink = item2:GetSpellName()
-            icon = GetSpellTexture(itemID)
-            callback(itemLink,icon,nil,true)
-          
-        end)
-    else 
-        local item2 = Item:CreateFromItemID(tonumber(itemID))
-        item2:ContinueOnItemLoad(function()
-            itemLink = item2:GetItemLink()
-            itemLevel = item2:GetCurrentItemLevel()
-            icon = item2:GetItemIcon()
-            callback(itemLink,icon,itemLevel,true)
-        end)
+    local currentDB = DB:GetRealmDB().professions or {}
+    -- no need to parse db, just store it, the player table db is empty
+
+    if isTableEmpty(currentDB) then
+        DB:Commit(alienDB)
+        return
+    end
+
+    local proffesions = alienDB[gRealmName].professions
+
+    local alienProfessions = {
+        ["First Aid"] = proffesions["First Aid"] or {},
+        ["Alchemy"] = proffesions["Alchemy"] or {},
+        ["Engineering"] = proffesions["Engineering"] or {},
+        ["Tailoring"] = proffesions["Tailoring"] or {},
+        ["Enchanting"] = proffesions["Enchanting"] or {},
+        ["Black Smithing"] = proffesions["Black Smithing"] or {},
+        ["Leather Working"] = proffesions["Leather Working"] or {},
+        ["Cooking"] = proffesions["Cooking"] or {}
+    }
+
+    local currentProfessions = {
+        ["First Aid"] = currentDB["First Aid"] or {},
+        ["Alchemy"] = currentDB["Alchemy"] or {},
+        ["Engineering"] = currentDB["Engineering"] or {},
+        ["Tailoring"] = currentDB["Tailoring"] or {},
+        ["Enchanting"] = currentDB["Enchanting"] or {},
+        ["Black Smithing"] = currentDB["Black Smithing"] or {},
+        ["Leather Working"] = currentDB["Leather Working"] or {},
+        ["Cooking"] = currentDB["Cooking"] or {}
+    }
+
+    local unholyDB = {}
+
+    for k, v in pairs(currentProfessions) do
+        unholyDB[k] = DB:MergeProfessions(alienProfessions[k], v)
     end
 
 end
 
 
-function getTableSize(table) 
+function DB:MergeProfessions(source, destination)
+
+    for k, v in pairs(source) do
+        local d = destination[k]
+        if d == nil then
+            destination[k] = v
+        else
+            destination[k].players = MergePlayers(source[k].players, destination[k].players)
+        end
+    end
+
+    return destination
+end
+
+function MergePlayers(source, destination)
+
+    for k, v in pairs(source) do
+        local d = destination[k]
+        if d == nil then
+            destination[k] = v
+        else
+        end
+        return destination
+
+    end
+end
+
+function GetItemData(itemID, proffesion, callback)
+    local itemLink
+    local itemLevel
+    local icon
+
+    if proffesion == "Enchanting" then
+        icon = GetSpellTexture(itemID)
+        local item2 = Spell:CreateFromSpellID(tonumber(itemID))
+        item2:ContinueOnSpellLoad(function()
+            --- get reagents
+            itemLink = item2:GetSpellName()
+            icon = GetSpellTexture(itemID)
+            callback(itemLink, icon, nil, true)
+
+        end)
+    else
+        local item2 = Item:CreateFromItemID(tonumber(itemID))
+        item2:ContinueOnItemLoad(function()
+            itemLink = item2:GetItemLink()
+            itemLevel = item2:GetCurrentItemLevel()
+            icon = item2:GetItemIcon()
+            callback(itemLink, icon, itemLevel, true)
+        end)
+    end
+
+end
+
+function getTableSize(table)
     local count = 0
     for k, v in pairs(table) do
         count = count + 1
@@ -90,19 +201,19 @@ function getTableSize(table)
     return count
 end
 
-function GetReagentData(reagentData, callback) 
+function GetReagentData(reagentData, callback)
     local reagents = {}
     local size = getTableSize(reagentData)
     local i = 0
     for reagentKey, count in pairs(reagentData) do
         local reagent = Item:CreateFromItemID(tonumber(reagentKey))
         reagent:ContinueOnItemLoad(function()
-            i = i+1
+            i = i + 1
 
             local itemCount = GetItemCount(reagentKey)
-            table.insert(reagents, {reagent:GetItemLink(),reagent:GetItemIcon(),reagentKey,count, itemCount})
-            if i == size then 
-             callback(reagents,true)
+            table.insert(reagents, {reagent:GetItemLink(), reagent:GetItemIcon(), reagentKey, count, itemCount})
+            if i == size then
+                callback(reagents, true)
             end
         end)
     end
@@ -114,36 +225,37 @@ function DB:InsertToDB(profession, items, sourcePlayer, callback)
         _db[itemId] = _db[itemId] or {}
 
         _db[itemId]["reagents"] = reagents
-        
+
         _db[itemId]["players"] = _db[itemId]["players"] or {}
-        local exists = _db[itemId]["players"][gGuildName .."-"..sourcePlayer] or false
+        local exists = _db[itemId]["players"][gGuildName .. "-" .. sourcePlayer] or false
         if not exists then
-            _db[itemId]["players"][gGuildName .."-"..sourcePlayer] = true
+            _db[itemId]["players"][gGuildName .. "-" .. sourcePlayer] = true
         end
-    end 
+    end
     gDB[gRealmName].professions[profession] = _db
+    DB:Commit(gDB)
     callback(true)
 end
 
 function DB:parseDBItems(profession, callback)
-    local items = gDB[gRealmName].professions[profession]
+    local items = DB:GetProfessionsDB()[profession] or {}
     local parsedItems = {}
-  
-    if items == nil or  getTableSize(items) == 0 then 
+
+    if items == nil or getTableSize(items) == 0 then
         callback(parsedItems)
-        return  parsedItems 
+        return parsedItems
     end
-    local size = getTableSize(items) 
+    local size = getTableSize(items)
     local count = 0
     for itemID, v in pairs(items) do
         local players = v.players
         -- callback hell, i know, i'll use an event trigger if it gets bigger, or will i...
-        GetItemData(itemID,profession, function(itemLink,icon,itemLevel,result)
-            local item =  {itemLink, itemLevel,icon,itemID}
-            GetReagentData(v.reagents,function(reagents,result2)
+        GetItemData(itemID, profession, function(itemLink, icon, itemLevel, result)
+            local item = {itemLink, itemLevel, icon, itemID}
+            GetReagentData(v.reagents, function(reagents, result2)
                 count = count + 1
                 if result2 then
-                    table.insert(parsedItems, {item,reagents,players})
+                    table.insert(parsedItems, {item, reagents, players})
                 end
                 if count == size then
                     callback(parsedItems)
@@ -153,124 +265,120 @@ function DB:parseDBItems(profession, callback)
     end
 end
 
+function DB:GetItemsDB(profession)
+    if profession ~= nil then
+        return gItemsDB[profession] or {}
+    end
+    return gItemsDB or {}
+end
+
 function DB:PrintItems()
-    for k,v in pairs(gItemsDB) do
+    for k, v in pairs(gItemsDB) do
         print(k)
     end
 end
 
 function DB:InitItems(callback)
+    local professions = {
+        "First Aid","Alchemy","Engineering","Tailoring","Enchanting","Black Smithing","Leather Working","Cooking"
+    }
     local i = 0
-    DB:LoadItems("Cooking", function()
-        i = i+1
-        print("Cooking Loaded")
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-    DB:LoadItems("Alchemy", function()
-        i = i+1
-        print("Alchemy Loaded")
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-
-    DB:LoadItems("Enchanting", function()
-        i = i+1
-        print("Enchanting Loaded")
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-    DB:LoadItems("First Aid", function()
-        i = i+1
-        print("First Aid loaded")
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-    DB:LoadItems("Tailoring", function()
-        print("Tailoring Loaded")
-        i = i+1
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-    DB:LoadItems("Engineering", function()
-        print("Engineering Loaded")
-        i = i+1
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-
-    DB:LoadItems("Leather Working", function()
-        print("Leather Working Loaded")
-        i = i+1
-        if i == 8 then 
-            callback(true)
-        end
-    end)
-
-
-    
-    DB:LoadItems("Black Smithing", function()
-        print("Black Smithing Loaded")
-        i = i+1
-        if i == 8 then 
-            callback(true)
-        end
-    end)
+    for k,v in pairs(professions) do
+        DB:LoadItems(v, function()
+            i = i + 1
+            if i == 8 then
+                callback(true)
+            end
+        end)
+    end
 
 
 
+    -- DB:LoadItems("Alchemy", function()
+    --     i = i + 1
+    --     print("Alchemy Loaded")
+    --     if i == 8 then
+    --         callback(true)
+    --     end
+    -- end)
 
-
-    -- DB:LoadItems("First Aid", function()
-
+    -- DB:LoadItems("Enchanting", function()
+    --     i = i + 1
+    --     print("Enchanting Loaded")
+    --     if i == 8 then
+    --         callback(true)
+    --     end
     -- end)
 
     -- DB:LoadItems("First Aid", function()
-
+    --     i = i + 1
+    --     print("First Aid loaded")
+    --     if i == 8 then
+    --         callback(true)
+    --     end
     -- end)
 
-    -- DB:LoadItems("First Aid", function()
+    -- DB:LoadItems("Tailoring", function()
+    --     print("Tailoring Loaded")
+    --     i = i + 1
+    --     if i == 8 then
+    --         callback(true)
+    --     end
+    -- end)
 
+    -- DB:LoadItems("Engineering", function()
+    --     print("Engineering Loaded")
+    --     i = i + 1
+    --     if i == 8 then
+    --         callback(true)
+    --     end
+    -- end)
+
+    -- DB:LoadItems("Leather Working", function()
+    --     print("Leather Working Loaded")
+    --     i = i + 1
+    --     if i == 8 then
+    --         callback(true)
+    --     end
+    -- end)
+
+    -- DB:LoadItems("Black Smithing", function()
+    --     print("Black Smithing Loaded")
+    --     i = i + 1
+    --     if i == 8 then
+    --         callback(true)
+    --     end
     -- end)
 
 
 end
 
-function DB:LoadItems(profession,callback)
+function DB:LoadItems(profession, callback)
     gItemsDB[profession] = {}
     DB:parseDBItems(profession, function(parsedItems)
         gItemsDB[profession] = parsedItems
         callback(true)
-    end)    
+    end)
 
 end
 
-function tprint (tbl, indent)
-    if tbl == nil then return end
-    if not indent then indent = 0 end
+function tprint(tbl, indent)
+    if tbl == nil then
+        return
+    end
+    if not indent then
+        indent = 0
+    end
 
     for k, v in pairs(tbl) do
-      formatting = string.rep("  ", indent) .. k .. ": "
-      if type(v) == "table" then
-        print(formatting)
-        tprint(v, indent+1)
-      elseif type(v) == 'boolean' then
-        print(formatting .. tostring(v))		
-      else
-        print(formatting .. v)
-      end
+        formatting = string.rep("  ", indent) .. k .. ": "
+        if type(v) == "table" then
+            print(formatting)
+            tprint(v, indent + 1)
+        elseif type(v) == 'boolean' then
+            print(formatting .. tostring(v))
+        else
+            print(formatting .. v)
+        end
     end
-  end
- 
+end

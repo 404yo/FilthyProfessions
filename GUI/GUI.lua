@@ -58,7 +58,7 @@ end
 
 function GUI:ReloadDB()
     DB = _G.DB
-    gItemsDB = _G.ItemsDB
+    gItemsDB = DB:GetItemsDB()
     AlchemyDB = gItemsDB["Alchemy"] or {}
     EnchantingDB = gItemsDB["Enchanting"] or {}
     BlackSmithingDB = gItemsDB["Black Smithing"] or {}

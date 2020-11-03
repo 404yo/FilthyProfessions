@@ -1,6 +1,7 @@
 local GuildProfessions = {}
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
+LibStub("AceComm-3.0"):Embed(GuildProfessions)
 
 local playerName = UnitName("player")
 local gPrefix = "BIGMAMBASA"
@@ -9,16 +10,12 @@ local gGuildName
 local gItems = {}
 local hasInit = false
 local defaults = {}
-local gProfile
 
 -------------------------------------
--- _G["DB"] = {}
 _G["GuildProfessions"] = GuildProfessions
-_G["profile"] = gProfile
 GUI = _G["GUI"]
 DB = _G.DB
 GDB = _G.GDB
--- _G["professionsDB"] = gDB
 
 -------------------------------------
 
@@ -39,7 +36,7 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         SendSyncMessage("craft")
     end
     if event == "CHAT_MSG_ADDON" then
-        MessageRecieveHandler(...)
+        -- MessageRecieveHandler(...)
     end
     if event == "PLAYER_ENTERING_WORLD" then
         local isInitialLogin, isReloadingUi = ...
@@ -49,7 +46,7 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
 
 end)
 
-function MessageRecieveHandler(prefix, message, sourceChannel, context)
+function GuildProfessions:MessageRecieveHandler(prefix, message, sourceChannel, context)
 
     if message == nil  and prefix == gPrefix then
         return
@@ -61,20 +58,12 @@ function MessageRecieveHandler(prefix, message, sourceChannel, context)
 
     if sourceChannel == "WHISPER" then
         if message == 'sync-me' then
-            print("got sync me")
-            local message = {}
-            message["profile"] = gProfile
-            message["db"] = _G.GDB
-            tprint(message)
+            local message =  DB:GetDB() or {}
             local payload = encodeMessage(message)
-            --TODO send CHUNS and not the whole payload [Chunks of professions]
-            C_ChatInfo.SendAddonMessage(gPrefix, payload, "WHISPER", context)
-            print("sent data")
+            GuildProfessions:SendCommMessage(gPrefix, payload, "WHISPER", context)
         else
             local data = decodeMessage(message)
-            print("Thanks for the sync".. data.profile)
-            GuildProfessionPlayersDB = getGuildProfessionPlayersDB or {}
-            GuildProfessionPlayersDB[data.profile] = data.db or {}
+            DB:InsertAlienDB(data)
             GUI:Refresh()
         end
     end
@@ -112,8 +101,8 @@ function GuildProfessions:init()
         return
     end
 
-    C_ChatInfo.RegisterAddonMessagePrefix(gPrefix)
-
+    -- C_ChatInfo.RegisterAddonMessagePrefix(gPrefix)
+    GuildProfessions:RegisterComm(gPrefix,"MessageRecieveHandler")
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
     gRealm = realmName
@@ -250,7 +239,7 @@ end
 function broadCastMessage(items, proff)
     if items == nil then return end
     local payload = prepareMessage(items, proff)
-    C_ChatInfo.SendAddonMessage(gPrefix, payload, "GUILD")
+    GuildProfessions:SendCommMessage(gPrefix, payload, "GUILD")
 end
 
 function prepareMessage(items, proff)
@@ -276,7 +265,6 @@ function decodeMessage(message)
         return data
     else
             
-    print("failed to decode payload")
     return nil
     end
 
@@ -308,7 +296,7 @@ local function commands(msg, editbox)
         GUI:Refresh()
     elseif cmd == 'sync' and args ~= "" then
         print("Syncing professions from player " .. args)
-        C_ChatInfo.SendAddonMessage(gPrefix, "sync-me", "WHISPER", args)
+        GuildProfessions:SendCommMessage(gPrefix, "sync-me", "WHISPER", args)
     elseif cmd == 'help' then
         print("\n[/fp] To toggle fp UI\n" 
         .. "[/fp reset] To refresh UI\n" 

@@ -4,4 +4,5 @@
  	<Script file="Libs\LibStub\LibStub.lua"/>
     <Script file="Libs\LibDeflate\LibDeflate.lua"/>
     <Script file="Libs\LibSerialize-1.1.0\LibSerialize.lua"/>
+    <include file="Libs\AceComm-3.0\AceComm-3.0.xml"/>
 </Ui>
