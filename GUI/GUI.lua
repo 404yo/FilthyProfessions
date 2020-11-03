@@ -1,6 +1,6 @@
 local GUI = {}
 local GUI_INIT = false
-local GuildProfessions = {}
+local FilthyProfessions = {}
 local DB = {}
 local font
 local gItemsDB = {}
@@ -45,7 +45,7 @@ function GUI:init()
         [firstAidBOX] = true,
         [alchemyBOX] = true,
     }
-    GuildProfessions = _G.GuildProfessions
+    FilthyProfessions = _G.FilthyProfessions
     GUI:LoadStyling()
     GUI:ReloadDB()
     GUI:Create()

@@ -13,7 +13,7 @@ Init the ItemDB, itemlinks and what not
 ]] --
 
 local DB = {}
-local GuildProfessions = {}
+local FilthyProfessions = {}
 --------------GLOBALS--------------------------
 
 local gDB = {}
@@ -23,7 +23,7 @@ local gGuildName
 _G["ItemsDB"] = gItemsDB
 _G["GDB"] = gDB
 _G["DB"] = DB
-GuildProfessions = _G.GuildProfessions
+FilthyProfessionsssions = _G.FilthyProfessions
 -----------------------------------------------
 
 
@@ -34,10 +34,10 @@ function DB:init(guildName, realmName, callback)
 end
 
 function DB:Reset(callback)
-    GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
-    gDB = GuildProfessionPlayersDB or {}
-    gDB[gRealmName] = GuildProfessionPlayersDB[gRealmName] or {}
-    gDB[gRealmName].professions = GuildProfessionPlayersDB[gRealmName].professions or {}
+    FilthyProfessionsPlayersDB = FilthyProfessionsPlayersDB or {}
+    gDB = FilthyProfessionsPlayersDB or {}
+    gDB[gRealmName] = FilthyProfessionsPlayersDB[gRealmName] or {}
+    gDB[gRealmName].professions = FilthyProfessionsPlayersDB[gRealmName].professions or {}
     _G.GDB = gDB
     DB:InitItems(function(boolean)
         callback(boolean)
@@ -50,21 +50,21 @@ function DB:GetRealmDB()
 end
 
 function DB:GetDB()
-    GuildProfessionPlayersDB = GuildProfessionPlayersDB or {}
-    GuildProfessionPlayersDB[gRealmName] = GuildProfessionPlayersDB[gRealmName] or {}
-    GuildProfessionPlayersDB[gRealmName].professions = GuildProfessionPlayersDB[gRealmName].professions or {}
-    local db = GuildProfessionPlayersDB
+    FilthyProfessionsPlayersDB = FilthyProfessionsPlayersDB or {}
+    FilthyProfessionsPlayersDB[gRealmName] = FilthyProfessionsPlayersDB[gRealmName] or {}
+    FilthyProfessionsPlayersDB[gRealmName].professions = FilthyProfessionsPlayersDB[gRealmName].professions or {}
+    local db = FilthyProfessionsPlayersDB
     return db
 end
 
 function DB:StoreDB()
-    GuildProfessionPlayersDB = gDB or {}
+    FilthyProfessionsPlayersDB = gDB or {}
 end
 
 function DB:Commit(db)
     if db ~= nil then
     end
-    GuildProfessionPlayersDB = db
+    FilthyProfessionsPlayersDB = db
 end
 
 function DB:CommitProfessions(professions)
@@ -291,65 +291,6 @@ function DB:InitItems(callback)
             end
         end)
     end
-
-
-
-    -- DB:LoadItems("Alchemy", function()
-    --     i = i + 1
-    --     print("Alchemy Loaded")
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("Enchanting", function()
-    --     i = i + 1
-    --     print("Enchanting Loaded")
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("First Aid", function()
-    --     i = i + 1
-    --     print("First Aid loaded")
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("Tailoring", function()
-    --     print("Tailoring Loaded")
-    --     i = i + 1
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("Engineering", function()
-    --     print("Engineering Loaded")
-    --     i = i + 1
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("Leather Working", function()
-    --     print("Leather Working Loaded")
-    --     i = i + 1
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
-    -- DB:LoadItems("Black Smithing", function()
-    --     print("Black Smithing Loaded")
-    --     i = i + 1
-    --     if i == 8 then
-    --         callback(true)
-    --     end
-    -- end)
-
 
 end
 
