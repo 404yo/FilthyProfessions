@@ -109,7 +109,7 @@ function GUI:SearchItems(str)
         searchFilteredDB[k] = {}
         local i = 0
         for _k, _v in pairs(v) do
-            if string.match(_v[1][1], str) then
+            if string.match(_v[1][1]:lower(), str:lower()) then
                 local i = i+1
                 searchFilteredDB[k][_k] = _v
             end
@@ -156,7 +156,7 @@ function GUI:CreateSearchBox(parent)
     editbox:EnableMouse(true)
     editbox:SetAltArrowKeyMode(false)
     editbox:SetAutoFocus(false)
-    editbox:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, -40)
+    editbox:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 10, -20)
     editbox:SetTextInsets(6, 6, 2, 0)
     editbox:SetScript("OnTextChanged", On_Search)
     editbox:Show()
@@ -409,8 +409,9 @@ end
 function GUI:CreateScrollFrame(frameName, parent, child)
     local scrollFrame = CreateFrame("ScrollFrame", frameName, parent, "UIPanelScrollFrameTemplate")
     scrollFrame:SetWidth(child:GetWidth())
-    scrollFrame:SetHeight(child:GetHeight())
+    scrollFrame:SetHeight(child:GetHeight()-80)
     scrollFrame:SetPoint("BOTTOM", parent, "BOTTOM", -12, 5)
+    scrollFrame:SetClipsChildren(true)
     scrollFrame:SetScrollChild(child)
     return scrollFrame
 
@@ -474,12 +475,8 @@ function GUI:Create()
     local frameName = "MAIN_FRAME"
     GUI.UI = {}
     GUI.UI.frame = GUI:CreateMainFrame(frameName)
-
+    
     GUI.UI.parentItemFrame = GUI:CreateParentItemFrame()
-    -- GUI.UI.parentItemFrame:SetWidth(346)
-    -- GUI.UI.parentItemFrame:SetHeight(GUI.UI.frame:GetHeight())
-    -- GUI.UI.parentItemFrame:SetPoint("LEFT", GUI.UI.frame, "LEFT")
-    -- GUI.UI.parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
 
     GUI.UI.title = GUI.UI.parentItemFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
     GUI.UI.title:SetPoint("TOP", GUI.UI.parentItemFrame, "TOP", 0, -5);
