@@ -83,18 +83,88 @@ function GUI:Refresh()
     end)
 end
 
+function GUI:SearchItems(str)
+    if str == nil then
+        return
+    end
+    -- print(str)
+    -- local itemIDs = {}
+    -- for k, v in pairs(GUI.UI.parentItemFrame.items) do
+    --     local name = GUI.UI.parentItemFrame.items[k].itemName
+    --     if str == nil or string.match(name, str) then
+    --         print("matched:" ..string.match(name, str))
+    --         local profession = GUI.UI.parentItemFrame.items[k].profession
+    --         local itemID = GUI.UI.parentItemFrame.items[k].itemID
+    --         itemIDs[profession] = itemIDs[profession] or {}
+    --         itemIDs[profession][itemID] = true
+    --     end
+    -- end
+
+    local filteredb = GUI:GetFilterDB()
+    if str == nil or str == "" then
+        GUI:RefreshItems(filteredb)
+    end
+    local searchFilteredDB = {}
+    for k, v in pairs(filteredb) do
+        searchFilteredDB[k] = {}
+        local i = 0
+        for _k, _v in pairs(v) do
+            if string.match(_v[1][1], str) then
+                local i = i+1
+                searchFilteredDB[k][_k] = _v
+            end
+        end
+    end
+    GUI:RefreshItems(searchFilteredDB)
+end
+
 function GUI:RefreshFilteredItems()
 
-    for k,v in pairs(GUI.UI.parentItemFrame.items) do
+    GUI.UI.parentItemFrame.items = GUI.UI.parentItemFrame.items or {}
+    for k, v in pairs(GUI.UI.parentItemFrame.items) do
         GUI.UI.parentItemFrame.items[k]:Hide()
         GUI.UI.parentItemFrame.items[k] = nil
     end
+    GUI.UI.parentItemFrame.items = GUI:CreateItems(GUI:GetFilterDB())
 
-    GUI.UI.parentItemFrame.items = GUI:CreateItems()
     -- if GUI.UI.frame:IsVisible() then 
     --     GUI.UI.frame:Hide()
     --     GUI.UI.frame:Show()
     -- end
+end
+
+function GUI:RefreshItems(db)
+    local _db = db or GUI:GetFilterDB() or {}
+    DB:Reset(function()
+        GUI:ReloadDB()
+        for k, v in pairs(GUI.UI.parentItemFrame.items) do
+            GUI.UI.parentItemFrame.items[k]:Hide()
+            GUI.UI.parentItemFrame.items[k] = nil
+        end
+        GUI.UI.parentItemFrame.items = GUI:CreateItems(_db)
+    end)
+
+    -- if GUI.UI.frame:IsVisible() then 
+    --     GUI.UI.frame:Hide()
+    --     GUI.UI.frame:Show()
+    -- end
+end
+
+function GUI:CreateSearchBox(parent)
+    local editbox = CreateFrame("EditBox", "SearchBox", parent, "InputBoxTemplate")
+    editbox:SetSize(180, 22)
+    editbox:EnableMouse(true)
+    editbox:SetAltArrowKeyMode(false)
+    editbox:SetAutoFocus(false)
+    editbox:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, -40)
+    editbox:SetTextInsets(6, 6, 2, 0)
+    editbox:SetScript("OnTextChanged", On_Search)
+    editbox:Show()
+    return editbox;
+end
+
+function On_Search(self)
+    GUI:SearchItems(self:GetText())
 end
 
 function GUI:CreateMainFrame(frameName)
@@ -273,6 +343,12 @@ function GUI:CreateItemButtonFrame(frameName, profession, parent, itemData)
     rowFrame.players = players
     rowFrame.profession = profession
 
+    if profession ~= "Enchanting" then
+        rowFrame.itemName = string.match(itemLink, "%[(.+)%]")
+    else
+        rowFrame.itemName = itemLink
+    end
+
     -- row icon
 
     rowFrame.icon = rowFrame:CreateTexture("rowIcon" .. tostring(itemTexture) .. "_icon")
@@ -295,15 +371,15 @@ function GUI:CreateItemButtonFrame(frameName, profession, parent, itemData)
     return rowFrame
 end
 
-function GUI:CreateItems()
-    local filteredDBs = GUI:GetFilterDB()
+function GUI:CreateItems(db)
+    local _db = db or {}
     local firstItem = true
     local items = {}
     local i = 0
-    for db_k, db_v in pairs(filteredDBs) do
+    for db_k, db_v in pairs(_db) do
         for k, v in pairs(db_v) do
             i = i + 1
-            items[i] = GUI:CreateItemButtonFrame("firstItemRow", "Enchanting", GUI.UI.content, v)
+            items[i] = GUI:CreateItemButtonFrame("firstItemRow", db_k, GUI.UI.content, v)
             if firstItem == false then
                 items[i]:SetPoint("TOP", items[i - 1], "BOTTOM")
                 items[i]:Show()
@@ -380,7 +456,6 @@ function GUI:TOGGLE()
     end
 end
 
-
 function GUI:CreateParentItemFrame()
     local parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", GUI.UI.frame, "BasicFrameTemplateWithInset")
     parentItemFrame:SetWidth(346)
@@ -422,6 +497,11 @@ function GUI:Create()
     GUI.UI.content:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
     GUI.UI.content:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
 
+    GUI.UI.SearchFrame = GUI:CreateSearchBox(GUI.UI.parentItemFrame)
+    -- GUI.UI.SearchFrame:SetHeight(GUI.UI.parentItemFrame:GetHeight() - GUI.UI.itemFilterMenu:GetHeight())
+    -- GUI.UI.SearchFrame:SetWidth(GUI.UI.parentItemFrame:GetWidth() - 40)
+    -- GUI.UI.SearchFrame:SetPoint("TOP", GUI.UI.itemFilterMenu, "BOTTOM", -15, 0)
+
     local scrollFrameName = "ITEM_SCROLL_FRAME"
     GUI.UI.scrollFrame = GUI:CreateScrollFrame(scrollFrameName, GUI.UI.parentItemFrame, GUI.UI.content)
     GUI.UI.scrollFrame:SetHeight(GUI.UI.parentItemFrame:GetHeight() - GUI.UI.itemFilterMenu:GetHeight())
@@ -462,7 +542,7 @@ function GUI:Create()
 
     ---------------------------------------------------------------------------
     GUI.UI.parentItemFrame.items = {}
-    GUI.UI.parentItemFrame.items = GUI:CreateItems()
+    GUI.UI.parentItemFrame.items = GUI:CreateItems(GUI:GetFilterDB())
     GUI.UI.frame:Hide()
 end
 

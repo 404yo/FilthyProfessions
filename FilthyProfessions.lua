@@ -72,9 +72,8 @@ end
 
 function persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
-    print(data)
     DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
-        GUI:Refresh()
+        GUI:RefreshItems()
     end)
 end
 
