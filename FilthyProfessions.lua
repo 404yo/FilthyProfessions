@@ -4,12 +4,14 @@ local LibSerialize = LibStub("LibSerialize")
 LibStub("AceComm-3.0"):Embed(FilthyProfessions)
 
 local playerName = UnitName("player")
-local gPrefix = "BIGMAMBASA"
+local gPrefix = "FilthyPrefix"
 local gRealm
 local gGuildName
 local gItems = {}
 local hasInit = false
+local initLock = false
 local defaults = {}
+
 
 -------------------------------------
 _G["FilthyProfessions"] = FilthyProfessions
@@ -27,7 +29,9 @@ EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
     if not hasInit then
-        FilthyProfessions:init()
+        init(function(boolean)
+            hasInit = boolean
+        end)
     end
     if (event == "TRADE_SKILL_UPDATE") then
         SendSyncMessage("trade")
@@ -64,7 +68,7 @@ function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel,
         else
             local data = decodeMessage(message)
             DB:InsertAlienDB(data)
-            GUI:Refresh()
+            GUI:RefreshFilteredItems()
         end
     end
 
@@ -73,14 +77,11 @@ end
 function persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
     DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
-        GUI:RefreshItems()
+        GUI:RefreshFilteredItems()
     end)
 end
 
-function FilthyProfessions:GetItemLink(itemId)
-    local _, itemLink, _, _, _, _, _, _, _, itemIcon, _, _, _, _, _, _, _ = GetItemInfo(itemId)
-    return itemLink, itemIcon
-end
+
 
 function parseMessage(data)
     local sourcePlayer = data["player"]
@@ -89,30 +90,31 @@ function parseMessage(data)
     return sourcePlayer, profession, items
 end
 
-function FilthyProfessions:IsPlayerInGuild()
+function IsPlayerInGuild()
     return IsInGuild() and GetGuildInfo("player")
 end
 
-function FilthyProfessions:init()
-    
-    -- guild name doesn't exist on start, stupid right
-    if not FilthyProfessions:IsPlayerInGuild() or hasInit then
-        return
+function init(callback)
+       -- guild name doesn't exist on start, stupid right
+    if not IsPlayerInGuild() or hasInit then
+        return callback(false)
     end
-
-    -- C_ChatInfo.RegisterAddonMessagePrefix(gPrefix)
+    if initLock then return end
+    initLock = true
+    
     FilthyProfessions:RegisterComm(gPrefix,"MessageRecieveHandler")
     local guildName, _, _, realmName = GetGuildInfo(playerName);
     realmName = GetNormalizedRealmName()
     gRealm = realmName
     gGuildName = guildName
-    DB:init(gGuildName,gRealm, function(boolean)
+
+    DB:init(gGuildName,gRealm ,playerName, function(boolean)
         if boolean then
             GUI:init()
-            hasInit = true
+            initLock = false
+            callback(true)
         end
     end)
-
 end
 
 function GetProfInfo(prof_type)
@@ -143,6 +145,7 @@ function GetRecipeInfo(prof_type, index)
     if (prof_type == "trade") then
         name, type, _, _, _, _ = GetTradeSkillInfo(index)
     elseif (prof_type == "craft") then
+        print(GetCraftInfo(index))
         name, _, type, _, _, _, _ = GetCraftInfo(index)
     end
 
@@ -220,6 +223,7 @@ end
 function GetRecipes(prof_type)
     local items = {}
     for i = 1, GetRecipeCount(prof_type) do
+        GetRecipeInfo(prof_type, i)
         local itemId = GetItemId(prof_type, i)
         local reagent = {}
 
@@ -268,6 +272,8 @@ function decodeMessage(message)
     end
 
 end
+
+
 function tprint(tbl, indent)
     if tbl == nil then
         return
@@ -301,8 +307,18 @@ local function commands(msg, editbox)
         .. "[/fp reset] To refresh UI\n" 
         .. "[/fp sync <player-name>] To Sync db from another player")
     else
-        FilthyProfessions:init()
-        GUI:TOGGLE()
+
+        if not hasInit then
+            init(function(boolean)
+                if boolean then 
+                    GUI:TOGGLE()
+                end
+            end)
+        else
+            GUI:TOGGLE()
+        end
+   
+
     end
 end
 
