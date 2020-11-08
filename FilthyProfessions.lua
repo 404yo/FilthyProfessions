@@ -2,7 +2,6 @@ local FilthyProfessions = {}
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 LibStub("AceComm-3.0"):Embed(FilthyProfessions)
-
 local playerName = UnitName("player")
 local gPrefix = "FilthyPrefix"
 local gRealm
@@ -11,6 +10,7 @@ local gItems = {}
 local hasInit = false
 local initLock = false
 local defaults = {}
+local t_insert = table.insert
 
 
 -------------------------------------
@@ -145,7 +145,6 @@ function GetRecipeInfo(prof_type, index)
     if (prof_type == "trade") then
         name, type, _, _, _, _ = GetTradeSkillInfo(index)
     elseif (prof_type == "craft") then
-        print(GetCraftInfo(index))
         name, _, type, _, _, _, _ = GetCraftInfo(index)
     end
 
@@ -209,56 +208,57 @@ function GetItemId(prof_type, index)
     return itemID
 
 end
+local itemsToSend = {}
 function SendSyncMessage(prof_type)
-    if (prof_type == "craft" or "trade") then
         local proff = GetProfInfo(prof_type)
-        local items = {}
         if (proff ~= nil) then
-            items = GetRecipes(prof_type)
-            broadCastMessage(items, proff)
+            GetRecipes(prof_type)
+            itemsToSend["player"] = playerName
+            itemsToSend["profession"] = proff
+            local serialized = LibSerialize:Serialize(itemsToSend)
+            local compressed = LibDeflate:CompressDeflate(serialized)
+            local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
+            FilthyProfessions:SendCommMessage(gPrefix, encoded, "GUILD")
         end
-    end
 end
 
 function GetRecipes(prof_type)
-    local items = {}
+    itemsToSend["items"] = {}
     for i = 1, GetRecipeCount(prof_type) do
         GetRecipeInfo(prof_type, i)
-        local itemId = GetItemId(prof_type, i)
-        local reagent = {}
-
+        local itemId = GetItemId(prof_type, i)  
         if (itemId ~= nil) then
-
+            itemsToSend["items"][itemId] = {}
             for j = 1, GetNumberOfReagents(prof_type, i) do
                 local reagentItemId = GetReagentItemid(prof_type, i, j)
-                reagent[reagentItemId] = GetReagentCount(prof_type, i, j);
+                local count = GetReagentCount(prof_type, i, j)
+                itemsToSend["items"][itemId][reagentItemId] =  count
             end
-            items[itemId] = reagent
         end
     end
-    return items
 end
 
-function broadCastMessage(items, proff)
-    if items == nil then return end
-    local payload = prepareMessage(items, proff)
-    FilthyProfessions:SendCommMessage(gPrefix, payload, "GUILD")
-end
 
-function prepareMessage(items, proff)
-    local message = {}
-    message["player"] = playerName
-    message["profession"] = proff
-    message["items"] = items
-    return encodeMessage(message)
-end
+-- function broadCastMessage(items, proff)
+--     if items == nil then return end
+--     local payload = prepareMessage(items, proff)
+--     FilthyProfessions:SendCommMessage(gPrefix, payload, "GUILD")
+-- end
 
-function encodeMessage(message)
-    local serialized = LibSerialize:Serialize(message)
-    local compressed = LibDeflate:CompressDeflate(serialized)
-    local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
-    return encoded
-end
+-- local message = {}
+-- function prepareMessage(items, proff)
+--     message["player"] = playerName
+--     message["profession"] = proff
+--     message["items"] = items
+--     return encodeMessage(message)
+-- end
+
+-- function encodeMessage(message)
+--     local serialized = LibSerialize:Serialize(message)
+--     local compressed = LibDeflate:CompressDeflate(serialized)
+--     local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
+--     return encoded
+-- end
 
 function decodeMessage(message)
     local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
