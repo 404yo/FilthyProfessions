@@ -29,15 +29,15 @@ EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
     if not hasInit then
-        init(function(boolean)
+        FilthyProfessions:init(function(boolean)
             hasInit = boolean
         end)
     end
     if (event == "TRADE_SKILL_UPDATE") then
-        SendSyncMessage("trade")
+        FilthyProfessions:SendSyncMessage("trade")
     end
     if (event == "CRAFT_UPDATE") then
-        SendSyncMessage("craft")
+        FilthyProfessions:SendSyncMessage("craft")
     end
     if event == "CHAT_MSG_ADDON" then
         -- MessageRecieveHandler(...)
@@ -50,6 +50,25 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
 
 end)
 
+local function decodeMessage(message)
+    local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
+    local decompressed = LibDeflate:DecompressDeflate(decoded)
+    local success, data = LibSerialize:Deserialize(decompressed)
+    if success then
+        return data
+    else  
+    return nil
+    end
+end
+
+local function encodeMessage(message)
+    local serialized = LibSerialize:Serialize(message)
+    local compressed = LibDeflate:CompressDeflate(serialized)
+    local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
+    return encoded
+end
+
+
 function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel, context)
 
     if message == nil  and prefix == gPrefix then
@@ -57,7 +76,8 @@ function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel,
     end
     if sourceChannel == "GUILD" then
         local data = decodeMessage(message)
-        persistPlayerProfessions(data)
+        message = nil
+        FilthyProfessions:persistPlayerProfessions(data)
     end
 
     if sourceChannel == "WHISPER" then
@@ -68,33 +88,32 @@ function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel,
         else
             local data = decodeMessage(message)
             DB:InsertAlienDB(data)
-            GUI:RefreshFilteredItems()
+            GUI:RefreshItems()
         end
     end
-
+    -- collectgarbage("collect")
 end
 
-function persistPlayerProfessions(data)
-    local sourcePlayer, profession, items = parseMessage(data)
-    DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
-        GUI:RefreshFilteredItems()
-    end)
-end
-
-
-
-function parseMessage(data)
+local function parseMessage(data)
     local sourcePlayer = data["player"]
     local profession = data["profession"]
     local items = data["items"]
     return sourcePlayer, profession, items
 end
 
-function IsPlayerInGuild()
+function FilthyProfessions:persistPlayerProfessions(data)
+    local sourcePlayer, profession, items = parseMessage(data)
+    DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
+        GUI:RefreshItems()
+    end)
+end
+
+
+local function IsPlayerInGuild()
     return IsInGuild() and GetGuildInfo("player")
 end
 
-function init(callback)
+function FilthyProfessions:init(callback)
        -- guild name doesn't exist on start, stupid right
     if not IsPlayerInGuild() or hasInit then
         return callback(false)
@@ -117,29 +136,7 @@ function init(callback)
     end)
 end
 
-function GetProfInfo(prof_type)
-    local skillLineDisplayName
-    if (prof_type == "trade") then
-        skillLineDisplayName, _, _ = GetTradeSkillLine()
-        return skillLineDisplayName
-    elseif (prof_type == "craft") then
-        skillLineDisplayName, _, _ = GetCraftDisplaySkillLine()
-        return skillLineDisplayName
-    end
-end
-
-function GetRecipeCount(prof_type)
-    if (prof_type == "trade") then
-        return GetNumTradeSkills()
-    elseif (prof_type == "craft") then
-        return GetNumCrafts()
-    end
-
-    return 0
-
-end
-
-function GetRecipeInfo(prof_type, index)
+local function GetRecipeInfo(prof_type, index)
     local name, type
 
     if (prof_type == "trade") then
@@ -152,7 +149,7 @@ function GetRecipeInfo(prof_type, index)
 
 end
 
-function GetNumberOfReagents(prof_type, index)
+local function GetNumberOfReagents(prof_type, index)
     local numberOfReagents
     if (prof_type == "craft") then
         numberOfReagents = GetCraftNumReagents(index)
@@ -162,7 +159,7 @@ function GetNumberOfReagents(prof_type, index)
     return numberOfReagents
 end
 
-function GetReagentItemid(prof_type, index, n)
+local function GetReagentItemid(prof_type, index, n)
     local itemLink
     if (prof_type == "craft") then
         itemLink = GetCraftReagentItemLink(index, n)
@@ -179,7 +176,7 @@ function GetReagentItemid(prof_type, index, n)
 
 end
 
-function GetReagentCount(prof_type, index, n)
+local function GetReagentCount(prof_type, index, n)
     local reagantCount
     if (prof_type == "craft") then
         _, _, reagantCount, _ = GetCraftReagentInfo(index, n);
@@ -189,7 +186,7 @@ function GetReagentCount(prof_type, index, n)
     return tostring(reagantCount)
 end
 
-function GetItemId(prof_type, index)
+local function GetItemId(prof_type, index)
     local itemLink, itemID
     if (prof_type == "trade") then
         itemLink = GetTradeSkillItemLink(index)
@@ -208,21 +205,32 @@ function GetItemId(prof_type, index)
     return itemID
 
 end
-local itemsToSend = {}
-function SendSyncMessage(prof_type)
-        local proff = GetProfInfo(prof_type)
-        if (proff ~= nil) then
-            GetRecipes(prof_type)
-            itemsToSend["player"] = playerName
-            itemsToSend["profession"] = proff
-            local serialized = LibSerialize:Serialize(itemsToSend)
-            local compressed = LibDeflate:CompressDeflate(serialized)
-            local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
-            FilthyProfessions:SendCommMessage(gPrefix, encoded, "GUILD")
-        end
+
+
+
+local function GetProfInfo(prof_type)
+    local skillLineDisplayName
+    if (prof_type == "trade") then
+        skillLineDisplayName, _, _ = GetTradeSkillLine()
+        return skillLineDisplayName
+    elseif (prof_type == "craft") then
+        skillLineDisplayName, _, _ = GetCraftDisplaySkillLine()
+        return skillLineDisplayName
+    end
 end
 
-function GetRecipes(prof_type)
+local function GetRecipeCount(prof_type)
+    if (prof_type == "trade") then
+        return GetNumTradeSkills()
+    elseif (prof_type == "craft") then
+        return GetNumCrafts()
+    end
+
+    return 0
+
+end
+local itemsToSend = {}
+local function GetRecipes(prof_type)
     itemsToSend["items"] = {}
     for i = 1, GetRecipeCount(prof_type) do
         GetRecipeInfo(prof_type, i)
@@ -237,6 +245,20 @@ function GetRecipes(prof_type)
         end
     end
 end
+
+
+function FilthyProfessions:SendSyncMessage(prof_type)
+        local proff = GetProfInfo(prof_type)
+        if (proff ~= nil) then
+            GetRecipes(prof_type)
+            itemsToSend["player"] = playerName
+            itemsToSend["profession"] = proff
+            local encoded = encodeMessage(itemsToSend)
+            FilthyProfessions:SendCommMessage(gPrefix, encoded, "GUILD")
+     end
+end
+
+
 
 
 -- function broadCastMessage(items, proff)
@@ -260,21 +282,9 @@ end
 --     return encoded
 -- end
 
-function decodeMessage(message)
-    local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
-    local decompressed = LibDeflate:DecompressDeflate(decoded)
-    local success, data = LibSerialize:Deserialize(decompressed)
-    if success then
-        return data
-    else
-            
-    return nil
-    end
-
-end
 
 
-function tprint(tbl, indent)
+local function tprint(tbl, indent)
     if tbl == nil then
         return
     end
@@ -309,7 +319,7 @@ local function commands(msg, editbox)
     else
 
         if not hasInit then
-            init(function(boolean)
+            FilthyProfessions:init(function(boolean)
                 if boolean then 
                     GUI:TOGGLE()
                 end
