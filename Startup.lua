@@ -10,15 +10,17 @@ local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("GUILD_ROSTER_UPDATE")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
-    print("event")
-    if (event == "GUILD_ROSTER_UPDATE") then
+    if event == "GUILD_ROSTER_UPDATE" and not FilthyProfessions.INIT  then
         Startup:start()
     end
 end)
 
-print("startup")
+local function IsPlayerInGuild()
+    return IsInGuild() and GetGuildInfo("player")
+end
+
 function Startup:start() 
-    print("Startup init")
+    if not IsPlayerInGuild() then return end
     FilthyProfessions:init()
     Startup:initDB()
     Startup:InitItems()
@@ -30,12 +32,18 @@ end
 
 function Startup:initDB() 
     local playerName = UnitName("player")
-    local guildName, _, _, realmName = GetGuildInfo(playerName);
+    local guildName, _, _, _ = GetGuildInfo(playerName);
 
-    FilthyProfessions.realmName = GetNormalizedRealmName()
+    local realmName = GetNormalizedRealmName()
+    
+    -- if realmName == nil or guildName or guildName == nil then 
+    --     return 
+    -- end
+
     FilthyProfessions.guildName = guildName
     FilthyProfessions.player = playerName
-    FilthyProfessions.Profile = FilthyProfessions.realmName.."-"..playerName
+    FilthyProfessions.realmName = realmName
+    FilthyProfessions.Profile = realmName.."-"..playerName
 
     FilthyProfessionsPlayersDB = FilthyProfessionsPlayersDB or {}
     FilthyProfessionsPlayersDB.professions = FilthyProfessionsPlayersDB.professions or {}

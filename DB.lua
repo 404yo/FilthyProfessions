@@ -22,7 +22,6 @@ local next = next
 local gDB = {}
 
 local gProfessions = {"First Aid", "Alchemy", "Engineering", "Tailoring", "Enchanting", "Black Smithing","Leather Working", "Cooking"}
------------------------------------------------
 
 function DB:init(callback)
     gDB = FilthyProfessions.gDB
@@ -167,8 +166,6 @@ function DB:parseDBItems(profession,callback)
         callback(true)
         return
     end
-
-    -- for k,v in next, gItemsDB[profession] do   gItemsDB[profession][k] = nil end
     
     local count = 0
     for itemID, v in next, items do
@@ -216,6 +213,7 @@ function DB:InsertToDB(profession, items, sourcePlayer, callback)
             shouldRefreshItems = true
             gDB.professions[profession][itemId] = {["reagents"] = reagents,[gRealmName] = {}}
         end 
+        
         gDB.professions[profession][itemId][gRealmName] = gDB.professions[profession][itemId][gRealmName] or {}
         if not gDB.professions[profession][itemId][gRealmName][sourcePlayer] then
             shouldRefreshItems = true

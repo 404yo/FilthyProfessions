@@ -143,6 +143,7 @@ local function isTableEmpty(tbl)
 end
 
 Reagents.frame = CreateFrame("Frame")
+Reagents.frame:SetScale(1)
 Reagents.reagentsSummary = Reagents.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
 Reagents.reagentsTitle = Reagents.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
 

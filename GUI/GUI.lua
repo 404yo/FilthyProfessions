@@ -22,7 +22,7 @@ local tailoringBOX = "Tailoring"
 local cookingBOX = "Cooking"
 local firstAidBOX = "First Aid"
 local alchemyBOX = "Alchemy"
-
+local pinnedBOX = "pinned"
 local gFilterSettings = {
     [blacksmithingBOX] = true,
     [enchantingBOX] = true,
@@ -32,7 +32,7 @@ local gFilterSettings = {
     [cookingBOX] = true,
     [firstAidBOX] = true,
     [alchemyBOX] = true,
-    ["pinnedItems"] = false,
+    ["pinned"] = false,
 }
 
 local tonumber = tonumber
@@ -57,6 +57,7 @@ function GUI:init()
     FilthyProfessions.gFilterSettings = gFilterSettings
     gItemsDB = FilthyProfessions.gItemsDB
     gProfileDB = FilthyProfessions.gProfileDB
+    gPinnedItems = gProfileDB["pinned"]
     gDB = FilthyProfessions.gDB
     GUI.UI = FilthyProfessions.MainWindow
     GUI.Item = FilthyProfessions.Item
@@ -87,6 +88,14 @@ function GUI:SearchItems(str)
         end
     end
 
+    if gFilterSettings[pinnedBOX] then
+        for k,v in next, gSearchItems do 
+            if not gPinnedItems[k]  then
+                gSearchItems[k] = false
+            end
+        end
+    end
+
     for k,v in next, GUI.Item.items do
         if gSearchItems[k]  and gFilterSettings[v.frame.profession] then
             GUI.Item.items[k].frame:Show()
@@ -109,44 +118,25 @@ function  GUI:DisplayPinnedItems()
     GUI:SortItemList() 
 end
 
-function GUI:RefreshItems(db)
-    GUI.UI.items = GUI.UI.items or {}
-    if GUI:isTableEmpty(db) then
-        GUI:DisplayFilteredItems()
-    else
-        GUI:CreateItems(db)
-    end
-end
-
-function GUI:DisplayFilteredItems() 
-    DB:tprint(gFilterSettings)
-    for k,v in next, GUI.Item.items do
-        if gFilterSettings[v.frame.profession] then
-            GUI.Item.items[k].frame:Show()
-        else
-            GUI.Item.items[k].frame:Hide()
+function GUI:DisplayFilteredItems()
+    if gFilterSettings[pinnedBOX] then
+        for k,v in next, GUI.Item.items do
+            if gPinnedItems[k] then
+                GUI.Item.items[k].frame:Show()
+            else
+                GUI.Item.items[k].frame:Hide()
+            end
+        end
+    else 
+        for k,v in next, GUI.Item.items do
+            if gFilterSettings[v.frame.profession] then
+                GUI.Item.items[k].frame:Show()
+            else
+                GUI.Item.items[k].frame:Hide()
+            end
         end
     end
     GUI:SortItemList() 
-end
-
-
-
-
-function GUI:displayDetailwindow(parent)
-
-    if GUI.UI.detail == nil then
-        GUI.UI.detail = GUI:CreateRowDetailWindow(parent)
-        GUI.UI.detail.frame:Show()
-    elseif GUI.UI.detail.itemLink ~= parent.itemLink then
-        GUI.UI.detail.frame:Hide()
-         GUI.UI.detail = GUI:CreateRowDetailWindow(parent)
-         GUI.UI.detail.frame:Show()
-    elseif GUI.UI.detail.frame:IsVisible() then
-        GUI.UI.detail.frame:Hide()
-    else
-        GUI.UI.detail.frame:Show()
-    end
 end
 
 
@@ -235,15 +225,23 @@ function  GUI:sortItems(rowFrames, sort_type)
 
     return rowFrames
 end
-
-
-
-function GUI:isTableEmpty(table)
-    if table == nil  or next(table) == nil then
-        return true
+function GUI:tprint(tbl, indent)
+    if tbl == nil then
+        return
     end
-    return false
+    if not indent then
+        indent = 0
+    end
 
+    for k, v in pairs(tbl) do
+        formatting = string.rep("  ", indent) .. k .. ": "
+        if type(v) == "table" then
+            print(formatting)
+            GUI:tprint(v, indent + 1)
+        elseif type(v) == 'boolean' then
+            print(formatting .. tostring(v))
+        else
+            print(formatting .. v)
+        end
+    end
 end
-
--------------------------------------------------------------

@@ -7,37 +7,13 @@ local  s_sub, next = string.sub, next
 
 Players.players = {}
 Players.frame = CreateFrame("Frame", "PLAYER_FRAME",nil)
+Players.frame:SetScale(1)
 Players.playersTitles = Players.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
 
 local function Update(players)
   
     local first = true
     local multiplier = 0
-
-    players["asjoidzcvzcjaso"]  = true
-    players["asjoidjvczxvxcaso"]  = true
-    players["asjozcxvzzxcvidjaso"]  = true
-    players["asjoidjzcvcxvaso"]  = true
-    players["asjozcxvcxidjaso"]  = true
-    players["asjoivzvdjaso"]  = true
-    players["asjoivzcvasddjaso"]  = true
-    players["asjoidjasdaso"]  = true
-    players["asjoizcvzcdjaso"]  = true
-    players["asjoivzcvcdjaso"]  = true
-    players["asjocxvzcxvxcvxcasdsadidjaso"]  = true
-    players["asjoidjaso"]  = true
-    players["asjoidasdasdjaso"]  = true
-    players["asjoidjaso"]  = true
-    players["asjzcvzcoidfsgcxvdjaso"]  = true
-    players["asjoidjaso"]  = true
-    players["asjoidvczxvzjaso"]  = true
-    players["asjoidjaso"]  = true
-    players["asjoidsadasdjaso"]  = true
-    players["asjoivzcvzczcdjaso"]  = true
-    players["asjoivzvdjaso"]  = true
-    players["asjoivzvzvdjbzaso"]  = true
-    players["asjovzcvzidjaso"]  = true
-    players["asjozcvzcidjaso"]  = true
 
     for k,v in next, Players.players do Players.players[k]:Hide() end
     local _players = {}

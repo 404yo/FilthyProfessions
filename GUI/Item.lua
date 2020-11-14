@@ -8,15 +8,16 @@ local font
 local tonumber, match,tostring = tonumber, string.match,tostring
 local gPinnedItems = {}
 
-local function pinItem(self, itemID, profession)
+local function pinItem(parent, itemID, profession)
     local itemID = itemID
     local profession = profession
     if not gPinnedItems[itemID] then
+        Item.items[itemID].pinn:Show()
         gPinnedItems[itemID] = profession
     else
+        Item.items[itemID].pinn:Hide()
         gPinnedItems[itemID] = nil
     end
-    GUI:RefreshItems()
 end
 
 local function Item_Onclick(parent, button, down)
@@ -63,15 +64,21 @@ local function SetPoint(current,relativePoint,first)
         current.lvltext:ClearAllPoints()
         current.professionText:ClearAllPoints()
 
-        current.icon:SetPoint("LEFT",  current.frame, "LEFT", 10, 0)
-        current.pinn:SetPoint("RIGHT", current.icon, "LEFT", -5, 0)
-        current.text:SetPoint("LEFT", current.icon, "RIGHT",10, 0)
+        current.icon:SetPoint("LEFT",  current.frame, "LEFT", 5, 0)
+        current.pinn:SetPoint("RIGHT", current.icon, "LEFT", -1, 0)
+        current.text:SetPoint("LEFT", current.icon, "RIGHT",4, 0)
         current.lvltext:SetPoint("CENTER", current.frame ,"RIGHT",-25, 0)
-        current.professionText:SetPoint("CENTER", current.frame, "RIGHT",-75, 0)
+        current.professionText:SetPoint("CENTER", current.frame, "RIGHT",-80, 0)
+
+
+        if gPinnedItems[current.frame.itemID] ~= nil then 
+            current.pinn:Show()
+        else 
+            current.pinn:Hide()
+        end
 
         current.frame:Show()
         current.icon:Show()
-        current.pinn:Show()
         current.text:Show()
         current.lvltext:Show()
         current.professionText:Show()
@@ -92,6 +99,7 @@ function Item:Create(frameName, profession, parent, item)
 
     Item.items[itemID] = Item.items[itemID] or {}
     Item.items[itemID].frame = CreateFrame("Button", frameName, parent)
+    Item.items[itemID].frame:SetScale(1)
     Item.items[itemID].frame:SetWidth((parent:GetWidth() - 4))
     Item.items[itemID].frame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
     Item.items[itemID].frame:SetHeight((parent:GetHeight() - 4) / 22)
@@ -111,7 +119,7 @@ function Item:Create(frameName, profession, parent, item)
     end
 
 
-    Item.items[itemID].icon =  Item.items[itemID].frame:CreateTexture("rowIcon" .. tostring(itemTexture) .. "_icon")
+    Item.items[itemID].icon =  Item.items[itemID].frame:CreateTexture(nil)
     Item.items[itemID].icon:SetPoint("LEFT",  Item.items[itemID].frame, "LEFT", 10, 0)
     Item.items[itemID].icon:SetHeight(20)
     Item.items[itemID].icon:SetWidth(20)
@@ -123,11 +131,7 @@ function Item:Create(frameName, profession, parent, item)
     Item.items[itemID].pinn:SetHeight(20)
     Item.items[itemID].pinn:SetWidth(20)
     Item.items[itemID].pinn:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
-    if gPinnedItems[itemID] then 
-        Item.items[itemID].pinn:Show()
-    else 
-        Item.items[itemID].pinn:Hide()
-    end
+
 
     Item.items[itemID].text = Item.items[itemID].frame:CreateFontString( Item.items[itemID].frame, "OVERLAY", "GAMETOOLTIPTEXT")
     Item.items[itemID].text:SetPoint("LEFT", Item.items[itemID].icon, "RIGHT",10, 0)
@@ -179,7 +183,6 @@ function Item:Create(frameName, profession, parent, item)
     end
 
     Item.items[itemID].professionText = Item.items[itemID].frame:CreateFontString( Item.items[itemID].frame, "OVERLAY", "GAMETOOLTIPTEXT")
-    Item.items[itemID].professionText:SetPoint("CENTER", Item.items[itemID].frame, "RIGHT",-75, 0)
     Item.items[itemID].professionText:SetText(professionText)
     Item.items[itemID].professionText:SetFont(font, 12, "OUTLINE")
     Item.items[itemID].frame:RegisterForClicks("AnyDown")

@@ -7,20 +7,41 @@ local Reagents = {}
 local MainWindow = {}
 local Players = {}
 
+local sgsub = string.gsub
+
+
+local function  OnItemEnter(parent)
+    GameTooltip:SetOwner(parent, "ANCHOR_CURSOR");
+    GameTooltip:ClearLines();
+    if parent.profession == "Enchanting" then
+        GameTooltip:SetHyperlink("spell:" .. parent.itemID)
+    else
+        GameTooltip:SetHyperlink(parent.itemLink)
+    end
+    GameTooltip:Show()
+end
+local function  OnItemLeave(parent)
+    GameTooltip:Hide()
+end
 local function Update(parent)
-    
+    if parent.itemID == DetailWindow.itemID and DetailWindow.frame:IsVisible() then 
+        DetailWindow.frame:Hide() 
+        return 
+    end
+
     DetailWindow.frame:Hide()
     local itemLink = parent.itemLink
     local itemID = parent.itemID
     local profession = parent.profession
     local reagents = parent.reagents
     local players = parent.players
-
-    print("This has an itemLink",itemLink)
+    DetailWindow.itemID = itemID
+    DetailWindow.infoIconFrame.itemID = itemID
+    DetailWindow.infoIconFrame.itemLink = itemLink
+    DetailWindow.infoIconFrame.profession = profession
     DetailWindow.infoIcon:SetTexture(parent.itemTexture)
-    DetailWindow.ItemNameText:SetText(itemLink);
+    DetailWindow.ItemNameText:SetText(sgsub(itemLink,"Enchant ",""));
     DetailWindow.professionText:SetText(profession);
-
     DetailWindow.reagents.update(reagents)
     DetailWindow.players.update(itemID,players)
 
@@ -43,13 +64,13 @@ function DetailWindow:Create(parent)
     
     if DetailWindow.frame == nil then
         
-            DetailWindow.frame = CreateFrame("Frame", "ItemDetailWindowFrame",MainWindow.frame, "BasicFrameTemplateWithInset")
-
-            DetailWindow.info = CreateFrame("Frame", "DetailWindowInfo" , DetailWindow.frame)
-
+            DetailWindow.frame = CreateFrame("Frame",nil,MainWindow.frame, "BasicFrameTemplateWithInset")
+            DetailWindow.info = CreateFrame("Frame",nil , DetailWindow.frame)
+            DetailWindow.infoIconFrame = CreateFrame("frame",nil,DetailWindow.frame)
     end
     
     DetailWindow.frame:SetWidth(260)
+    DetailWindow.frame:SetScale(1)
     DetailWindow.frame:SetHeight(MainWindow.parentItemFrame:GetHeight())
     DetailWindow.frame:SetPoint("LEFT", MainWindow.parentItemFrame, "RIGHT", 0, 0)
     DetailWindow.frame:Hide()
@@ -68,11 +89,23 @@ function DetailWindow:Create(parent)
     DetailWindow.info:SetHeight(DetailWindow.frame:GetHeight() /5 - 10)
     DetailWindow.info:SetPoint("TOP", DetailWindow.frame, "TOP", 0, -25)
 
-    DetailWindow.infoIcon = DetailWindow.frame:CreateTexture(nil)
+    DetailWindow.infoIconFrame:SetHeight(40)
+    DetailWindow.infoIconFrame:SetWidth(40)
+    DetailWindow.infoIconFrame:SetPoint("TOPLEFT", DetailWindow.frame, "TOPLEFT", 10, -60)
+
+    DetailWindow.infoIcon = DetailWindow.infoIconFrame:CreateTexture(nil)
+   
     DetailWindow.infoIcon:ClearAllPoints()
     DetailWindow.infoIcon:SetPoint("TOPLEFT", DetailWindow.frame, "TOPLEFT", 10, -60)
     DetailWindow.infoIcon:SetHeight(40)
     DetailWindow.infoIcon:SetWidth(40)
+
+       
+    DetailWindow.infoIconFrame.profession = profession
+    DetailWindow.infoIconFrame.itemID = itemID
+    DetailWindow.infoIconFrame.itemLink = itemLink
+    DetailWindow.infoIconFrame:SetScript("OnEnter", OnItemEnter)
+    DetailWindow.infoIconFrame:SetScript("OnLeave", OnItemLeave)
 
     DetailWindow.ItemNameText = DetailWindow.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
     DetailWindow.ItemNameText:ClearAllPoints()

@@ -9,6 +9,7 @@ local tailoringBOX = "Tailoring"
 local cookingBOX = "Cooking"
 local firstAidBOX = "First Aid"
 local alchemyBOX = "Alchemy"
+local pinnedBOX  = "pinned"
 FilthyProfessions.MainWindow = MainWindow
 
 local Item = {}
@@ -17,7 +18,6 @@ local font
 local gFilterSettings
 
 local function  CreateScrollFrame(frameName, parent, child)
-    -- https://youtu.be/1CQHKo1Pt2Q?list=PL3wt7cLYn4N-3D3PTTUZBM2t1exFmoA2G&t=2014
     local  scrollFrame = CreateFrame("ScrollFrame", frameName, parent, "UIPanelScrollFrameTemplate")
     scrollFrame:SetWidth(child:GetWidth())
     scrollFrame:SetHeight(child:GetHeight() - 80)
@@ -44,6 +44,7 @@ end
 
 local function CheckBox_OnClick(self)
     local name = self:GetName()
+    print(name)
     gFilterSettings[name] = self:GetChecked()
     GUI:DisplayFilteredItems()
 end
@@ -72,7 +73,7 @@ local function CreateCheckBox(frameName, parent, checkBoxText, checked)
     menu:SetWidth(25)
     menu:SetHeight(25)
     menu.text:SetText(checkBoxText)
-    menu.text:SetFont(font, 12, "OUTLINE, MONOCHROME")
+    menu.text:SetFont(font, 12, "MONOCHROME")
     menu:SetChecked(checked)
     menu:Show()
     menu:SetScript("OnClick", CheckBox_OnClick)
@@ -119,10 +120,6 @@ local function CreateMainFrame(frameName)
     return frame
 end
 
--- function MainWindow:CreateItem("profession")
-
---     MainWindow.items[#MainWindow.items+1] = Item:Create("ITEM"..#MainWindow.items,)
--- end
 
 function MainWindow:Create()
     font = FilthyProfessions.font
@@ -174,7 +171,7 @@ function MainWindow:Create()
     MainWindow.itemCol.ItemLevelText :SetFont(font, 12, "OUTLINE");
 
     MainWindow.itemCol.professionText = MainWindow.itemCol:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-    MainWindow.itemCol.professionText :SetPoint("RIGHT", MainWindow.itemCol.ItemLevelText, "LEFT", -20, 0);
+    MainWindow.itemCol.professionText :SetPoint("RIGHT", MainWindow.itemCol.ItemLevelText, "LEFT", -30, 0);
     MainWindow.itemCol.professionText :SetText("prof");
     MainWindow.itemCol.professionText :SetFont(font, 12, "OUTLINE");
 
@@ -216,6 +213,8 @@ function MainWindow:Create()
     MainWindow.firstAidBox =
         CreateCheckBox(firstAidBOX, MainWindow.itemFilterMenu, "First Aid", gFilterSettings[firstAidBOX])
 
+    MainWindow.PinnedBox = CreateCheckBox(pinnedBOX, MainWindow.itemFilterMenu, "Pin", gFilterSettings[pinnedBOX])
+
     MainWindow.enchantingBox:SetPoint("LEFT", MainWindow.blacksmithingBox.text, "RIGHT", 10, 0)
     MainWindow.alchemyBox:SetPoint("LEFT", MainWindow.itemFilterMenu, "TOPLEFT", 5, -18)
     MainWindow.leatherWorking:SetPoint("LEFT", MainWindow.engineeringBox.text, "RIGHT", 0, 0)
@@ -224,5 +223,6 @@ function MainWindow:Create()
     MainWindow.firstAidBox:SetPoint("TOP", MainWindow.leatherWorking, "BOTTOM", 0, 0)
     MainWindow.blacksmithingBox:SetPoint("BOTTOM", MainWindow.leatherWorking, "TOP", 0, 0)
     MainWindow.tailoring:SetPoint("TOP", MainWindow.enchantingBox, "BOTTOM", 0, 0)
+    MainWindow.PinnedBox:SetPoint("LEFT", MainWindow.tailoring,"RIGHT",55,0)
     MainWindow.frame:Hide()
 end
