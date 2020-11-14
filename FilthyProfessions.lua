@@ -1,38 +1,27 @@
 local FilthyProfessions = {}
+LibStub("AceComm-3.0"):Embed(FilthyProfessions)
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
-LibStub("AceComm-3.0"):Embed(FilthyProfessions)
 local playerName = UnitName("player")
 local gPrefix = "FilthyPrefix"
-local gRealm
-local gGuildName
-local gItems = {}
-local hasInit = false
-local initLock = false
-local defaults = {}
 local t_insert = table.insert
-
-
--------------------------------------
+local hasInit = false
+FilthyProfessions.INIT = false
 _G["FilthyProfessions"] = FilthyProfessions
-GUI = _G["GUI"]
-DB = _G.DB
-GDB = _G.GDB
+local DB = {}
+local GUI = {}
+local Startup = {}
 
--------------------------------------
+
+local next =  next
+
 
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 EventFrame:RegisterEvent("CRAFT_UPDATE")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
-EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
-    if not hasInit then
-        FilthyProfessions:init(function(boolean)
-            hasInit = boolean
-        end)
-    end
     if (event == "TRADE_SKILL_UPDATE") then
         FilthyProfessions:SendSyncMessage("trade")
     end
@@ -40,14 +29,7 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         FilthyProfessions:SendSyncMessage("craft")
     end
     if event == "CHAT_MSG_ADDON" then
-        -- MessageRecieveHandler(...)
     end
-    if event == "PLAYER_ENTERING_WORLD" then
-        local isInitialLogin, isReloadingUi = ...
-        if isInitialLogin or isReloadingUi then
-        end
-    end
-
 end)
 
 local function decodeMessage(message)
@@ -68,16 +50,16 @@ local function encodeMessage(message)
     return encoded
 end
 
-
+local recievedData = {}
 function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel, context)
 
     if message == nil  and prefix == gPrefix then
         return
     end
     if sourceChannel == "GUILD" then
-        local data = decodeMessage(message)
+        recievedData = decodeMessage(message)
         message = nil
-        FilthyProfessions:persistPlayerProfessions(data)
+        FilthyProfessions:persistPlayerProfessions(recievedData)
     end
 
     if sourceChannel == "WHISPER" then
@@ -88,7 +70,7 @@ function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel,
         else
             local data = decodeMessage(message)
             DB:InsertAlienDB(data)
-            GUI:RefreshItems()
+            GUI:CreateItems()
         end
     end
     -- collectgarbage("collect")
@@ -104,7 +86,6 @@ end
 function FilthyProfessions:persistPlayerProfessions(data)
     local sourcePlayer, profession, items = parseMessage(data)
     DB:InsertToDB(profession, items, sourcePlayer, function(boolean)
-        GUI:RefreshItems()
     end)
 end
 
@@ -113,27 +94,12 @@ local function IsPlayerInGuild()
     return IsInGuild() and GetGuildInfo("player")
 end
 
-function FilthyProfessions:init(callback)
-       -- guild name doesn't exist on start, stupid right
-    if not IsPlayerInGuild() or hasInit then
-        return callback(false)
-    end
-    if initLock then return end
-    initLock = true
-    
+function FilthyProfessions:init()
     FilthyProfessions:RegisterComm(gPrefix,"MessageRecieveHandler")
-    local guildName, _, _, realmName = GetGuildInfo(playerName);
-    realmName = GetNormalizedRealmName()
-    gRealm = realmName
-    gGuildName = guildName
-
-    DB:init(gGuildName,gRealm ,playerName, function(boolean)
-        if boolean then
-            GUI:init()
-            initLock = false
-            callback(true)
-        end
-    end)
+    DB  = FilthyProfessions.DB
+    GUI = FilthyProfessions.GUI
+    Startup = FilthyProfessions.Startup
+    hasInit = true
 end
 
 local function GetRecipeInfo(prof_type, index)
@@ -229,9 +195,8 @@ local function GetRecipeCount(prof_type)
     return 0
 
 end
-local itemsToSend = {}
+local itemsToSend = {["items"] = {}}
 local function GetRecipes(prof_type)
-    itemsToSend["items"] = {}
     for i = 1, GetRecipeCount(prof_type) do
         GetRecipeInfo(prof_type, i)
         local itemId = GetItemId(prof_type, i)  
@@ -249,40 +214,18 @@ end
 
 function FilthyProfessions:SendSyncMessage(prof_type)
         local proff = GetProfInfo(prof_type)
+
         if (proff ~= nil) then
             GetRecipes(prof_type)
             itemsToSend["player"] = playerName
             itemsToSend["profession"] = proff
             local encoded = encodeMessage(itemsToSend)
             FilthyProfessions:SendCommMessage(gPrefix, encoded, "GUILD")
+            for k,v in next, itemsToSend["items"] do itemsToSend["items"][k] = nil end
+            itemsToSend["player"] = nil
+            itemsToSend["profession"] = nil
      end
 end
-
-
-
-
--- function broadCastMessage(items, proff)
---     if items == nil then return end
---     local payload = prepareMessage(items, proff)
---     FilthyProfessions:SendCommMessage(gPrefix, payload, "GUILD")
--- end
-
--- local message = {}
--- function prepareMessage(items, proff)
---     message["player"] = playerName
---     message["profession"] = proff
---     message["items"] = items
---     return encodeMessage(message)
--- end
-
--- function encodeMessage(message)
---     local serialized = LibSerialize:Serialize(message)
---     local compressed = LibDeflate:CompressDeflate(serialized)
---     local encoded = LibDeflate:EncodeForWoWAddonChannel(compressed)
---     return encoded
--- end
-
-
 
 local function tprint(tbl, indent)
     if tbl == nil then
@@ -317,18 +260,7 @@ local function commands(msg, editbox)
         .. "[/fp reset] To refresh UI\n" 
         .. "[/fp sync <player-name>] To Sync db from another player")
     else
-
-        if not hasInit then
-            FilthyProfessions:init(function(boolean)
-                if boolean then 
-                    GUI:TOGGLE()
-                end
-            end)
-        else
-            GUI:TOGGLE()
-        end
-   
-
+        FilthyProfessions.GUI:TOGGLE()
     end
 end
 

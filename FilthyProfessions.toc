@@ -8,6 +8,16 @@
 libs.xml
 #@end-no-lib-strip@
 
+
+FilthyProfessions.lua
 DB.lua
 GUI\GUI.lua
-FilthyProfessions.lua
+GUI\Reagents.lua
+GUI\Players.lua
+GUI\Item.lua
+GUI\Reagents.lua
+GUI\DetailWindow.lua
+GUI\MainWindow.lua
+
+
+Startup.lua
