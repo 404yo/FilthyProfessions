@@ -161,14 +161,13 @@ function GUI:CreateItems(db)
     if not db then db = gItemsDB end
     for profession, items in next, db do
         for itemID, itemContent in next, items do
-            if not GUI.Item.items[itemID]  then  
+            if not GUI.Item.items[itemID] then  
                 GUI.Item:Create(
                 nil,
                 profession, 
                 GUI.UI.content,
                 itemContent
                 )
-                GUI.Item.items[itemID].frame:Show();
             end
         end
     end
