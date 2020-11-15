@@ -24,7 +24,10 @@ local function Item_Onclick(parent, button, down)
     if button == "RightButton" then
         pinItem(parent, parent.itemID, parent.profession)
     elseif button == "LeftButton" then
-        Item.detailWindow.update(parent)
+        if not FilthyProfessions.DetailWindow.frame then   
+            FilthyProfessions.DetailWindow:Create(parent)
+        end
+        FilthyProfessions.DetailWindow.update(parent)        
     end
 end
 
@@ -87,7 +90,6 @@ end
 
 function Item:Create(frameName, profession, parent, item)
     gPinnedItems = FilthyProfessions.gPinnedItems
-    local DetailWindow = FilthyProfessions.DetailWindow
     font = FilthyProfessions.font
     local itemLink = item[1]
     local itemTexture = item[3]
@@ -194,7 +196,5 @@ function Item:Create(frameName, profession, parent, item)
     Item.items[itemID].setPoint = function (_self,relativePoint,first)
         SetPoint(_self,relativePoint,first)                        
     end
-
-    Item.detailWindow = DetailWindow:Create(Item.items[itemID].frame)
     Item.items[itemID].frame:Show()
 end

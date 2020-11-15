@@ -2,12 +2,13 @@ local Reagents = {}
 Reagents.reagentRows = {}
 local FilthyProfessions = _G.FilthyProfessions
 FilthyProfessions.Reagents = Reagents
+local realm
 local font
 local DB ={}
 
 local unpack,next, tonumber, floor = unpack,next,tonumber,floor
 
-
+-- local AucAdvanced = AucAdvanced
 local function  OnItemLeave(parent)
     GameTooltip:Hide()
 end
@@ -56,10 +57,12 @@ local function updateReagent(reagent,ableToCraftCount,reagentRow)
     reagentRow.countText:SetPoint("RIGHT", reagentRow.frame , "RIGHT", -20, 0)
     reagentRow.countText:SetText("["..count.."/"..itemCountString.."]")
     reagentRow.frame.itemLink = itemLink
+    
 
     reagentRow.countText:SetFont(font, 12, "OUTLINE");
     reagentRow.countText:SetPoint("RIGHT", reagentRow.frame , "RIGHT", -20, 0)
     reagentRow.countText:SetText("["..count.."/"..itemCountString.."]")
+
 
     reagentRow.frame:SetScript("OnEnter", OnItemEnter)
     reagentRow.frame:SetScript("OnLeave", OnItemLeave)
@@ -81,7 +84,7 @@ local function CreateRow(reagent,ableToCraftCount,index,parent)
 
     reagentRow.frame = CreateFrame("Button", "REAGENT_"..index, parent.frame)   
     reagentRow.countText = reagentRow.frame:CreateFontString(font, "OVERLAY", "GAMETOOLTIPTEXT")
-
+    reagentRow.marketPrice = reagentRow.frame:CreateFontString(font, "OVERLAY")
     reagentRow.frame:SetWidth(parent.frame:GetWidth() - 4)
     reagentRow.frame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
     reagentRow.frame:SetHeight(10)
@@ -108,7 +111,7 @@ local function CreateRow(reagent,ableToCraftCount,index,parent)
 end
 
 
-local function UpdateReagents(reagents)
+local function UpdateReagents(reagents,callback)
     local ableToCraftCount = 999
     for k,v in next,Reagents.reagentRows do Reagents.reagentRows[k].frame:Hide() end
 
@@ -132,6 +135,7 @@ local function UpdateReagents(reagents)
     Reagents.reagentsSummary:SetPoint("TOPLEFT", Reagents.frame, "BOTTOMLEFT", 10, -4);
     Reagents.reagentsSummary:SetText("Resources for: |cFFFFC0CB"..floor(ableToCraftCount).."|r");
     Reagents.reagentsSummary:SetFont(font, 12);
+    callback(true)
 
 end
 
@@ -150,7 +154,7 @@ Reagents.reagentsTitle = Reagents.frame:CreateFontString(nil, "OVERLAY", "GameFo
 function Reagents:Create(parent,reagents)
     font = FilthyProfessions.font
     DB = FilthyProfessions.DB
-
+    realm = FilthyProfessions.realmName
     Reagents.frame:SetParent(parent.frame)
     Reagents.frame:SetWidth(parent.frame:GetWidth())
     Reagents.frame:SetHeight(parent.frame:GetHeight()/2 - parent.info:GetHeight())
@@ -163,10 +167,9 @@ function Reagents:Create(parent,reagents)
     line:SetThickness(2)
     line:SetStartPoint("TOPLEFT",10,-20)
     line:SetEndPoint("TOPRIGHT",-10,-20)
-    UpdateReagents(reagents)
 
-    Reagents.update = function(_reagents) 
-        UpdateReagents(_reagents)
+    Reagents.update = function(_reagents,callback) 
+        UpdateReagents(_reagents,callback)
     end
 
 

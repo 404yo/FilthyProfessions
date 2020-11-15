@@ -7,8 +7,9 @@ local Reagents = {}
 local MainWindow = {}
 local Players = {}
 
-local sgsub = string.gsub
 
+local sgsub = string.gsub
+local AucAdvanced = AucAdvanced
 
 local function  OnItemEnter(parent)
     GameTooltip:SetOwner(parent, "ANCHOR_CURSOR");
@@ -28,7 +29,6 @@ local function Update(parent)
         DetailWindow.frame:Hide() 
         return 
     end
-
     DetailWindow.frame:Hide()
     local itemLink = parent.itemLink
     local itemID = parent.itemID
@@ -42,14 +42,20 @@ local function Update(parent)
     DetailWindow.infoIcon:SetTexture(parent.itemTexture)
     DetailWindow.ItemNameText:SetText(sgsub(itemLink,"Enchant ",""));
     DetailWindow.professionText:SetText(profession);
-    DetailWindow.reagents.update(reagents)
-    DetailWindow.players.update(itemID,players)
 
-    DetailWindow.frame:Show()
+    
+
+    DetailWindow.reagents.update(reagents,function() 
+        DetailWindow.players.update(players, function() 
+            DetailWindow.frame:Show()
+        end)
+    end)
 
 end
 
 function DetailWindow:Create(parent)
+    print("first update")
+
     MainWindow = FilthyProfessions.MainWindow
     Reagents = FilthyProfessions.Reagents
     Players = FilthyProfessions.Players
@@ -127,7 +133,6 @@ function DetailWindow:Create(parent)
             DetailWindow.frame:Show()
         end
     end
-
     DetailWindow.update = function(item)
         Update(item)
     end

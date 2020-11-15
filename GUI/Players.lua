@@ -10,8 +10,7 @@ Players.frame = CreateFrame("Frame", "PLAYER_FRAME",nil)
 Players.frame:SetScale(1)
 Players.playersTitles = Players.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
 
-local function Update(players)
-  
+local function Update(players,callback)
     local first = true
     local multiplier = 0
 
@@ -52,6 +51,8 @@ local function Update(players)
 
         i = i + 1
     end
+    callback()
+
 end
 
 function Players:Create(parent,itemID,reagents,playersList)
@@ -73,11 +74,10 @@ function Players:Create(parent,itemID,reagents,playersList)
     line:SetStartPoint("TOPLEFT",10,-10)
     line:SetEndPoint("TOPRIGHT",-10,-10)
 
-    Players.update = function() 
-        Update(playersList)
+    Players.update = function(_playersList,callback) 
+        Update(_playersList,callback)
     end
 
-    Update(playersList)
     return Players
 
 end
