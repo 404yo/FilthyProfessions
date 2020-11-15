@@ -63,6 +63,7 @@ function GUI:init()
     GUI.Item = FilthyProfessions.Item
     GUI.UI:Create()
     GUI:CreateItems()
+    GUI:SortItemList() 
 end
 
 function GUI:LoadStyling()
