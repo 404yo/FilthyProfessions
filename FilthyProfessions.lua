@@ -31,11 +31,11 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         return 
     end
 
-    if (event == "TRADE_SKILL_UPDATE") and not syncLock then
+    if (event == "TRADE_SKILL_UPDATE") and not syncLock and not InCombatLockdown() then
         syncs = syncs + 1 
         FilthyProfessions:SendSyncMessage("trade")
     end
-    if (event == "CRAFT_UPDATE")  and not syncLock then
+    if (event == "CRAFT_UPDATE")  and not syncLock and not InCombatLockdown() then
         syncs = syncs + 1
         FilthyProfessions:SendSyncMessage("craft")
     end
@@ -63,8 +63,7 @@ end
 local recievedData = {}
 function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel, context)
 
-    if message == nil  or recieveLock then
-        print("receiveLock",recieveLock)
+    if message == nil  or recieveLock or InCombatLockdown() then
         return
     end
     if sourceChannel == "GUILD" then
