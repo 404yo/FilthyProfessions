@@ -62,11 +62,7 @@ function GUI:init()
     GUI.UI = FilthyProfessions.MainWindow
     GUI.Item = FilthyProfessions.Item
     GUI.UI:Create()
-    GUI:TOGGLE()
-
     GUI:CreateItems()
-
-
 end
 
 function GUI:LoadStyling()
@@ -154,7 +150,11 @@ local function getTableSize(table)
 end
 
 function GUI:TOGGLE()
-    GUI.UI.frame:Show()
+    if  GUI.UI.frame:IsVisible() then
+        GUI.UI.frame:Hide()
+    else
+        GUI.UI.frame:Show()
+    end
 end
 
 function GUI:CreateItems(db)

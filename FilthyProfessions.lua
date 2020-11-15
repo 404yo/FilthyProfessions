@@ -11,8 +11,11 @@ _G["FilthyProfessions"] = FilthyProfessions
 local DB = {}
 local GUI = {}
 local Startup = {}
-
-
+local syncLocktrigger = 4
+local syncs = 0
+local syncLock = false
+local recieveLock = false
+local timer = C_Timer
 local next =  next
 
 
@@ -22,14 +25,21 @@ EventFrame:RegisterEvent("CRAFT_UPDATE")
 EventFrame:RegisterEvent("CHAT_MSG_ADDON")
 
 EventFrame:SetScript("OnEvent", function(self, event, ...)
-    if (event == "TRADE_SKILL_UPDATE") then
+    if syncs == syncLocktrigger and not syncLock then 
+        syncLock = true
+        timer.After(12, function()  syncs = 0 syncLock = false end)
+        return 
+    end
+
+    if (event == "TRADE_SKILL_UPDATE") and not syncLock then
+        syncs = syncs + 1 
         FilthyProfessions:SendSyncMessage("trade")
     end
-    if (event == "CRAFT_UPDATE") then
+    if (event == "CRAFT_UPDATE")  and not syncLock then
+        syncs = syncs + 1
         FilthyProfessions:SendSyncMessage("craft")
     end
-    if event == "CHAT_MSG_ADDON" then
-    end
+
 end)
 
 local function decodeMessage(message)
@@ -53,7 +63,8 @@ end
 local recievedData = {}
 function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel, context)
 
-    if message == nil  and prefix == gPrefix then
+    if message == nil  or recieveLock then
+        print("receiveLock",recieveLock)
         return
     end
     if sourceChannel == "GUILD" then
@@ -247,18 +258,23 @@ local function tprint(tbl, indent)
         end
     end
 end
-
+local sfind = string.find
 local function commands(msg, editbox)
-    local _, _, cmd, args = string.find(msg, "%s?(%w+)%s?(.*)")
-    if cmd == 'reset' then
-        GUI:Refresh()
-    elseif cmd == 'sync' and args ~= "" then
-        print("Syncing professions from player " .. args)
-        FilthyProfessions:SendCommMessage(gPrefix, "sync-me", "WHISPER", args)
+    local _, _, cmd, args = sfind(msg, "%s?(%w+)%s?(.*)")
+    if cmd == 'sync' and args ~= "" then
+        print("Soon^tm")
+        -- FilthyProfessions:SendCommMessage(gPrefix, "sync-me", "WHISPER", args)
+
+    elseif cmd == 'soff' then 
+        recieveLock = true
+    elseif cmd == 'son' then
+        recieveLock = false
     elseif cmd == 'help' then
-        print("\n[/fp] To toggle fp UI\n" 
-        .. "[/fp reset] To refresh UI\n" 
-        .. "[/fp sync <player-name>] To Sync db from another player")
+        print("\n|cFF91ce16/fp|r or |cFF91ce16/filthyprofessions|r :To toggle window\n" 
+        .. "|cFF91ce16/fp sync <player-name>|r or |cFF91ce16/filthyprofessions sync <player-name>|r To Sync db from another player\n"
+        .. "|cFF91ce16/fp soff|r or |cFF91ce16/filthyprofessions soff|r :To turn off syncing from other players\n"
+        .. "|cFF91ce16/fp son|r or |cFF91ce16/filthyprofessions son|r :To Turn on syncing from other players\n"
+    )
     else
         FilthyProfessions.GUI:TOGGLE()
     end
