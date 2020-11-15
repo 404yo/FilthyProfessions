@@ -43,8 +43,6 @@ local function Update(parent)
     DetailWindow.ItemNameText:SetText(sgsub(itemLink,"Enchant ",""));
     DetailWindow.professionText:SetText(profession);
 
-    
-
     DetailWindow.reagents.update(reagents,function() 
         DetailWindow.players.update(players, function() 
             DetailWindow.frame:Show()
@@ -54,7 +52,6 @@ local function Update(parent)
 end
 
 function DetailWindow:Create(parent)
-    print("first update")
 
     MainWindow = FilthyProfessions.MainWindow
     Reagents = FilthyProfessions.Reagents

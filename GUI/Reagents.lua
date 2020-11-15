@@ -7,8 +7,9 @@ local font
 local DB ={}
 
 local unpack,next, tonumber, floor = unpack,next,tonumber,floor
+local s_len,s_sub = string.len, string.sub
 
--- local AucAdvanced = AucAdvanced
+local AucAdvanced = AucAdvanced
 local function  OnItemLeave(parent)
     GameTooltip:Hide()
 end
@@ -24,10 +25,32 @@ local function  OnItemEnter(parent)
     GameTooltip:Show()
 end
 
+local function GetReagentPrice(itemLink,count,itemCount)
+    local marketprice
+    if AucAdvanced and AucAdvanced.API then
+       marketprice =  AucAdvanced.API.GetMarketValue(itemLink,realm)
+
+    end
+
+    if marketprice ~= nil then
+        -- price = marketprice * (count - itemCount)
+        print("as",marketprice,itemLink,s_len(marketprice))
+        local gold =  math.floor(marketprice /10000)
+        local silver = math.floor(marketprice /100) - (gold*100)
+        local copper = math.floor(marketprice /10) - (silver*100)
+        print("gold", gold )
+        print("silver", silver)
+        print("copper", copper)
+
+   end
+end
+
 
 local function updateReagent(reagent,ableToCraftCount,reagentRow)
-
+    
     local itemLink, itemIcon, reagentID, count, itemCount = unpack(reagent)
+
+    -- local price = GetReagentPrice(itemLink,count,itemCount)
 
     reagentRow.icon:SetTexture(itemIcon)
     reagentRow.text:SetText(itemLink)
@@ -71,16 +94,16 @@ local function updateReagent(reagent,ableToCraftCount,reagentRow)
         ableToCraftCount = itemCount/count
     end
 
-
+    reagentRow.frame:Show()
     return ableToCraftCount,reagentRow
 
 end
 
 local function CreateRow(reagent,ableToCraftCount,index,parent)
-    
     local reagentRow = {} 
 
     local itemLink, itemIcon, reagentID, count, itemCount = unpack(reagent)
+    -- print("Creating Row",itemLink)
 
     reagentRow.frame = CreateFrame("Button", "REAGENT_"..index, parent.frame)   
     reagentRow.countText = reagentRow.frame:CreateFontString(font, "OVERLAY", "GAMETOOLTIPTEXT")
@@ -101,13 +124,14 @@ local function CreateRow(reagent,ableToCraftCount,index,parent)
     reagentRow.frame.itemLink = itemLink
     reagentRow.frame:SetScript("OnEnter", OnItemEnter)
     reagentRow.frame:SetScript("OnLeave", OnItemLeave)
+    
+
     reagentRow.update = function(_reagent,_ableToCraftCount) 
         return updateReagent(_reagent,_ableToCraftCount,reagentRow)
     end
-    if itemCount/count < ableToCraftCount then
-        ableToCraftCount = itemCount/count
-    end
-    return ableToCraftCount,reagentRow
+
+    return updateReagent(reagent,ableToCraftCount,reagentRow)
+
 end
 
 
@@ -130,11 +154,13 @@ local function UpdateReagents(reagents,callback)
             Reagents.reagentRows[k].frame:SetPoint("TOP", Reagents.reagentRows[k-1].frame, "BOTTOM", 0, -5)
         end
         Reagents.reagentRows[k].frame:Show()
+        -- print("k",k)
     end
     Reagents.reagentsSummary:ClearAllPoints() 
     Reagents.reagentsSummary:SetPoint("TOPLEFT", Reagents.frame, "BOTTOMLEFT", 10, -4);
     Reagents.reagentsSummary:SetText("Resources for: |cFFFFC0CB"..floor(ableToCraftCount).."|r");
     Reagents.reagentsSummary:SetFont(font, 12);
+    Reagents.reagentsSummary:Show()
     callback(true)
 
 end
@@ -169,9 +195,11 @@ function Reagents:Create(parent,reagents)
     line:SetEndPoint("TOPRIGHT",-10,-20)
 
     Reagents.update = function(_reagents,callback) 
-        UpdateReagents(_reagents,callback)
+        UpdateReagents(_reagents,function() 
+            -- print("Returning callback")
+            Reagents.frame:Show()
+            callback(true)
+        end)
     end
-
-
     return Reagents
 end
