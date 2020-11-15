@@ -51,7 +51,7 @@ local function Update(players,callback)
 
         i = i + 1
     end
-    callback()
+    callback(true)
 
 end
 
@@ -75,7 +75,7 @@ function Players:Create(parent,itemID,reagents,playersList)
     line:SetEndPoint("TOPRIGHT",-10,-10)
 
     Players.update = function(_playersList,callback) 
-        Update(_playersList,callback)
+        Update(_playersList,function() callback(true) end)
     end
 
     return Players
