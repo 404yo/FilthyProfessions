@@ -55,13 +55,13 @@ local function Update(players,callback)
 
 end
 
-function Players:Create(parent,itemID,reagents,playersList)
+function Players:Create(parent,itemID,reagents,infoFrame,playersList)
     font = FilthyProfessions.font
     Players.frame:SetParent(parent.frame)
-    Players.frame:SetWidth( reagents.frame:GetWidth())
-    Players.frame:SetHeight(reagents.frame:GetHeight()+30)
+    Players.frame:SetWidth(reagents.frame:GetWidth())
+    Players.frame:SetHeight(parent.frame:GetHeight() - reagents.frame:GetHeight() - infoFrame:GetHeight())
     Players.frame:ClearAllPoints()
-    Players.frame:SetPoint("BOTTOM",  parent.frame, "BOTTOM", 0, 0)
+    Players.frame:SetPoint("TOP",  reagents.frame, "BOTTOM", 0, -5)
 
     Players.playersTitles:ClearAllPoints()
     Players.playersTitles:SetPoint("LEFT", Players.frame, "TOPLEFT", 9, 0);
