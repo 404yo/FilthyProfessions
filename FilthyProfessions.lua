@@ -209,6 +209,7 @@ local function commands(msg, editbox)
         .. "|cFF91ce16/fp son|r or |cFF91ce16/filthyprofessions son|r :To Turn on syncing from other players\n"
     )
     else
+        FilthyProfessions.GUI:SortItemList() 
         FilthyProfessions.GUI:TOGGLE()
     end
 end

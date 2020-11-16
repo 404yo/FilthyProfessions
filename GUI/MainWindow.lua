@@ -44,8 +44,6 @@ end
 
 local function CheckBox_OnClick(self)
     local name = self:GetName()
-    print(name)
-    GUI:tprint(gItemsDB[name])
     gFilterSettings[name] = self:GetChecked()
     GUI:DisplayFilteredItems()
 end

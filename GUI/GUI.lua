@@ -5,7 +5,6 @@ FilthyProfessions.GUI = GUI
 local gPinnedItems = {}
 local gSearchItems = {}
 local gItemsDB = {}
-local gProfileDB = {}
 
 
 local font
@@ -21,7 +20,7 @@ local alchemyBOX = "Alchemy"
 local pinnedBOX = "pinned"
 local gFilterSettings = {
     [blacksmithingBOX] = true,
-    [enchantingBOX] = false,
+    [enchantingBOX] = true,
     [engineeringBOX] = true,
     [leatherWorkingBOX] = true,
     [tailoringBOX] = true,

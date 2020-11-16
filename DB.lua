@@ -6,6 +6,7 @@ FilthyProfessions.DB = DB
 local gItemsDB
 local gRealmName
 local type, next, t_insert  = type, next, table.insert
+local _Item = Item
 
 
 local gDB = {}
@@ -71,10 +72,9 @@ local function GetItemData(itemID, proffesion, callback)
         item2:ContinueOnSpellLoad(function()
                 itemLink = item2:GetSpellName()
                 callback(itemLink, icon, itemID, true)
-        
         end)
     else
-        local item2 = Item:CreateFromItemID(tonumber(itemID))
+        local item2 = _Item:CreateFromItemID(tonumber(itemID))
         item2:ContinueOnItemLoad(function()
             itemLink = item2:GetItemLink()
             itemLevel = item2:GetCurrentItemLevel()
@@ -96,7 +96,6 @@ local function getTableSize(table)
     end
     return count
 end
-local _Item = Item
 local function GetReagentData(reagentData, callback)
     local size = getTableSize(reagentData)
     local reagentsData = {}
@@ -173,7 +172,6 @@ end
 
 function DB:InsertToDB(profession, items, sourcePlayer, callback)
     local insert = true
-    DB:tprint(items)
     for k,itemID in next, items do
         local id = tonumber(itemID)
         gPlayersDB[profession][id] = gPlayersDB[profession][id] or {}
