@@ -4,10 +4,8 @@ local FilthyProfessions = _G.FilthyProfessions
 FilthyProfessions.Reagents = Reagents
 local realm
 local font
-local DB ={}
 
 local unpack,next, tonumber, floor = unpack,next,tonumber,floor
-local s_len,s_sub = string.len, string.sub
 
 local AucAdvancedAPI
 local initAuc = false
@@ -30,16 +28,8 @@ local function  OnItemEnter(parent)
     GameTooltip:Show()
 end
 
-local function ParsePriceToCoins(marketprice)
-    local gold =  math.floor(marketprice /10000)
-    local silver = math.floor(marketprice /100) - (gold*100)
-    local copper = marketprice - (silver*100+(gold*10000))
-    return gold,silver,copper
-end
-
 local function GetReagentPrice(itemLink,count,itemCount)
 
- 
     local marketprice
     if AucAdvancedAPI then
        marketprice = AucAdvancedAPI.GetMarketValue(itemLink,realm)
@@ -57,8 +47,8 @@ end
 
 local GetItemCount = GetItemCount
 local function updateReagent(reagent,ableToCraftCount,reagentRow)
-    local itemLink, itemIcon, reagentID, count, itemCount = unpack(reagent)
-    itemCount = GetItemCount(itemLink,true)
+    local itemLink, itemIcon, reagentID, count = unpack(reagent)
+    local itemCount = GetItemCount(itemLink,true)
     local marketPrice, priceWithMats = GetReagentPrice(itemLink,count,itemCount)
 
     reagentRow.icon:SetTexture(itemIcon)
@@ -111,7 +101,7 @@ local function CreateRow(reagent,ableToCraftCount,index,parent)
     local reagentRow = {} 
 
 
-    local itemLink, itemIcon, reagentID, count, itemCount = unpack(reagent)
+    local itemLink, _, _, _ = unpack(reagent)
 
     reagentRow.frame = CreateFrame("Button", "REAGENT_"..index, parent.frame)   
     reagentRow.countText = reagentRow.frame:CreateFontString(font, "OVERLAY", "GAMETOOLTIPTEXT")
@@ -122,13 +112,7 @@ local function CreateRow(reagent,ableToCraftCount,index,parent)
     reagentRow.icon = reagentRow.frame:CreateTexture("REAGENT_ROW_ICON_"..index)
     reagentRow.text = reagentRow.frame:CreateFontString(font, "OVERLAY", "GAMETOOLTIPTEXT")
 
-    local itemCountString
 
-    if tonumber(count) <= tonumber(itemCount) then
-        itemCountString = "|cFF00FF00" .. itemCount .. "|r"
-    else
-        itemCountString = "|cFFFF0000" .. itemCount .. "|r"
-    end
     reagentRow.frame.itemLink = itemLink
     reagentRow.frame:SetScript("OnEnter", OnItemEnter)
     reagentRow.frame:SetScript("OnLeave", OnItemLeave)
@@ -161,7 +145,7 @@ local function UpdateReagents(reagents,callback)
         if k == 1 then
             Reagents.reagentRows[k].frame:SetPoint("TOP", Reagents.frame, "TOP", 10, -35)
         else
-            Reagents.reagentRows[k].frame:SetPoint("TOP", Reagents.reagentRows[k-1].frame, "BOTTOM", 0, -5)
+            Reagents.reagentRows[k].frame:SetPoint("TOP", Reagents.reagentRows[k-1].frame, "BOTTOM", 0, -10)
         end
         Reagents.reagentRows[k].frame:Show()
         totalMarketPrice = totalMarketPrice + marketPrice 
@@ -184,12 +168,6 @@ local function UpdateReagents(reagents,callback)
 
 end
 
-local function isTableEmpty(tbl)
-    if next(tbl) == nil then
-        return true
-    end
-    return false
-end
 
 Reagents.frame = CreateFrame("Frame",nil,nil)
 Reagents.reagentsSummary = Reagents.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");

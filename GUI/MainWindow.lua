@@ -12,7 +12,7 @@ local alchemyBOX = "Alchemy"
 local pinnedBOX  = "pinned"
 FilthyProfessions.MainWindow = MainWindow
 
-local Item = {}
+local gItemsDB
 
 local font
 local gFilterSettings
@@ -34,16 +34,18 @@ local function CreateContentFrame(frameName, parent)
     return contentFrame
 end
 
-local function CreateMenuFrame(frameName, parent)
-    local  menuFrame = CreateFrame("Frame", frameName, parent, "InsetFrameTemplate2")
-    menuFrame:SetWidth(parent:GetWidth() / 5 - 20)
-    menuFrame:SetHeight(parent:GetHeight() - 30)
-    menuFrame:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 6, 6)
-    return menuFrame
-end
+-- local function CreateMenuFrame(frameName, parent)
+--     local  menuFrame = CreateFrame("Frame", frameName, parent, "InsetFrameTemplate2")
+--     menuFrame:SetWidth(parent:GetWidth() / 5 - 20)
+--     menuFrame:SetHeight(parent:GetHeight() - 30)
+--     menuFrame:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 6, 6)
+--     return menuFrame
+-- end
 
 local function CheckBox_OnClick(self)
     local name = self:GetName()
+    print(name)
+    GUI:tprint(gItemsDB[name])
     gFilterSettings[name] = self:GetChecked()
     GUI:DisplayFilteredItems()
 end
@@ -127,6 +129,7 @@ function MainWindow:Create()
     if FilthyProfessions.GUI_INIT then
         return
     end
+    gItemsDB = FilthyProfessions.gItemsDB
     FilthyProfessions.GUI_INIT = true
     local frameName = "MAIN_FRAME"
   

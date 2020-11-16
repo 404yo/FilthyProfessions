@@ -1,23 +1,19 @@
 
 local GUI = {}
 local FilthyProfessions = _G.FilthyProfessions
-local DB = FilthyProfessions.DB
 FilthyProfessions.GUI = GUI
 local gPinnedItems = {}
-local gFilteredDBs = {}
 local gSearchItems = {}
 local gItemsDB = {}
 local gProfileDB = {}
-local gDB = {}
 
 
-local GUI_INIT = false
 local font
 
 local blacksmithingBOX = "Black Smithing"
 local enchantingBOX = "Enchanting"
 local engineeringBOX = "Engineering"
-local leatherWorkingBOX = "Leather Working"   
+local leatherWorkingBOX = "Leather Working"
 local tailoringBOX = "Tailoring"
 local cookingBOX = "Cooking"
 local firstAidBOX = "First Aid"
@@ -25,30 +21,22 @@ local alchemyBOX = "Alchemy"
 local pinnedBOX = "pinned"
 local gFilterSettings = {
     [blacksmithingBOX] = true,
-    [enchantingBOX] = true,
+    [enchantingBOX] = false,
     [engineeringBOX] = true,
     [leatherWorkingBOX] = true,
     [tailoringBOX] = true,
     [cookingBOX] = true,
     [firstAidBOX] = true,
     [alchemyBOX] = true,
-    ["pinned"] = false,
+    [pinnedBOX] = false,
 }
 
 local tonumber = tonumber
 local tostring = tostring
 local next = next
 local match = string.match
-local unpack = unpack
-local floor = math.floor
 local t_sort = table.sort
 local t_insert = table.insert
-local s_sub = string.sub
-local s_len = string.len
-
-
-local sort_types = {"itemLevel", "name", "profession"}
-local selected_sort_type = "itemLevel"
 
     
 function GUI:init()
@@ -56,9 +44,7 @@ function GUI:init()
     FilthyProfessions.GUI = GUI
     FilthyProfessions.gFilterSettings = gFilterSettings
     gItemsDB = FilthyProfessions.gItemsDB
-    gProfileDB = FilthyProfessions.gProfileDB
-    gPinnedItems = gProfileDB["pinned"]
-    gDB = FilthyProfessions.gDB
+    gPinnedItems = FilthyProfessions.gPinnedItems
     GUI.UI = FilthyProfessions.MainWindow
     GUI.Item = FilthyProfessions.Item
     GUI.UI:Create()
@@ -141,14 +127,6 @@ local function SortByItemLevel(a, b)
     return tonumber(a[2]) > tonumber(b[2])
 end
 
-local function getTableSize(table)
-    local count = 0
-    local tbl = table
-    for k, v in next, tbl do
-        count = count + 1
-    end
-    return count
-end
 
 function GUI:TOGGLE()
     if  GUI.UI.frame:IsVisible() then
@@ -159,8 +137,8 @@ function GUI:TOGGLE()
 end
 
 function GUI:CreateItems(db)
-    if not db then db = gItemsDB end
-    for profession, items in next, db do
+
+    for profession, items in next, gItemsDB do
         for itemID, itemContent in next, items do
             if not GUI.Item.items[itemID] then  
                 GUI.Item:Create(
@@ -172,18 +150,18 @@ function GUI:CreateItems(db)
             end
         end
     end
-    GUI:SortItemList() 
+    GUI:SortItemList()
 end
 
 
 local sortedItemIds = {}
-function GUI:SortItemList() 
-    
+function GUI:SortItemList()
     for k,v in next, sortedItemIds do sortedItemIds[k] = nil end
 
     for itemID,item in next, GUI.Item.items do
         if item.frame:IsVisible() then 
            t_insert(sortedItemIds, {itemID, item.frame.itemLevel})
+
         end
     end
 
@@ -234,7 +212,7 @@ function GUI:tprint(tbl, indent)
     end
 
     for k, v in pairs(tbl) do
-        formatting = string.rep("  ", indent) .. k .. ": "
+        local formatting = string.rep("  ", indent) .. k .. ": "
         if type(v) == "table" then
             print(formatting)
             GUI:tprint(v, indent + 1)

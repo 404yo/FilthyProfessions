@@ -8,8 +8,8 @@
 libs.xml
 #@end-no-lib-strip@
 
-
 FilthyProfessions.lua
+ProfessionsDB.lua
 DB.lua
 GUI\GUI.lua
 GUI\Reagents.lua

@@ -4,20 +4,15 @@ local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerialize = LibStub("LibSerialize")
 local playerName = UnitName("player")
 local gPrefix = "FilthyPrefix"
-local t_insert = table.insert
-local hasInit = false
 FilthyProfessions.INIT = false
 _G["FilthyProfessions"] = FilthyProfessions
 local DB = {}
-local GUI = {}
-local Startup = {}
 local syncLocktrigger = 4
 local syncs = 0
 local syncLock = false
 local recieveLock = false
 local timer = C_Timer
-local next =  next
-
+local t_insert = table.insert
 
 local EventFrame = CreateFrame("frame", "EventFrame")
 EventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
@@ -28,7 +23,7 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
     if syncs == syncLocktrigger and not syncLock then 
         syncLock = true
         timer.After(12, function()  syncs = 0 syncLock = false end)
-        return 
+        return
     end
 
     if (event == "TRADE_SKILL_UPDATE") and not syncLock and not InCombatLockdown() then
@@ -42,13 +37,19 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
 
 end)
 
+
+function FilthyProfessions:init()
+    FilthyProfessions:RegisterComm(gPrefix,"MessageRecieveHandler")
+    DB  = FilthyProfessions.DB
+end
+
 local function decodeMessage(message)
     local decoded = LibDeflate:DecodeForWoWAddonChannel(message)
     local decompressed = LibDeflate:DecompressDeflate(decoded)
     local success, data = LibSerialize:Deserialize(decompressed)
     if success then
         return data
-    else  
+    else
     return nil
     end
 end
@@ -72,24 +73,23 @@ function FilthyProfessions:MessageRecieveHandler(prefix, message, sourceChannel,
         FilthyProfessions:persistPlayerProfessions(recievedData)
     end
 
-    if sourceChannel == "WHISPER" then
-        if message == 'sync-me' then
-            local message =  DB:GetDB() or {}
-            local payload = encodeMessage(message)
-            FilthyProfessions:SendCommMessage(gPrefix, payload, "WHISPER", context)
-        else
-            local data = decodeMessage(message)
-            DB:InsertAlienDB(data)
-            GUI:CreateItems()
-        end
-    end
-    -- collectgarbage("collect")
+    -- if sourceChannel == "WHISPER" then
+    --     if message == 'sync-me' then
+    --         local message =  DB:GetDB() or {}
+    --         local payload = encodeMessage(message)
+    --         FilthyProfessions:SendCommMessage(gPrefix, payload, "WHISPER", context)
+    --     else
+    --         local data = decodeMessage(message)
+    --         DB:InsertAlienDB(data)
+    --         GUI:CreateItems()
+    --     end
+    -- end
 end
 
 local function parseMessage(data)
     local sourcePlayer = data["player"]
     local profession = data["profession"]
-    local items = data["items"]
+    local items = data["itemID"]
     return sourcePlayer, profession, items
 end
 
@@ -100,67 +100,6 @@ function FilthyProfessions:persistPlayerProfessions(data)
 end
 
 
-local function IsPlayerInGuild()
-    return IsInGuild() and GetGuildInfo("player")
-end
-
-function FilthyProfessions:init()
-    FilthyProfessions:RegisterComm(gPrefix,"MessageRecieveHandler")
-    DB  = FilthyProfessions.DB
-    GUI = FilthyProfessions.GUI
-    Startup = FilthyProfessions.Startup
-    hasInit = true
-end
-
-local function GetRecipeInfo(prof_type, index)
-    local name, type
-
-    if (prof_type == "trade") then
-        name, type, _, _, _, _ = GetTradeSkillInfo(index)
-    elseif (prof_type == "craft") then
-        name, _, type, _, _, _, _ = GetCraftInfo(index)
-    end
-
-    return name, type
-
-end
-
-local function GetNumberOfReagents(prof_type, index)
-    local numberOfReagents
-    if (prof_type == "craft") then
-        numberOfReagents = GetCraftNumReagents(index)
-    elseif (prof_type == "trade") then
-        numberOfReagents = GetTradeSkillNumReagents(index)
-    end
-    return numberOfReagents
-end
-
-local function GetReagentItemid(prof_type, index, n)
-    local itemLink
-    if (prof_type == "craft") then
-        itemLink = GetCraftReagentItemLink(index, n)
-    elseif (prof_type == "trade") then
-        itemLink = GetTradeSkillReagentItemLink(index, n)
-    end
-
-    if (not itemLink) then
-        return
-    end
-    local itemID = itemLink:match("item:(%d+)")
-
-    return itemID
-
-end
-
-local function GetReagentCount(prof_type, index, n)
-    local reagantCount
-    if (prof_type == "craft") then
-        _, _, reagantCount, _ = GetCraftReagentInfo(index, n);
-    elseif (prof_type == "trade") then
-        _, _, reagantCount, _ = GetTradeSkillReagentInfo(index, n)
-    end
-    return tostring(reagantCount)
-end
 
 local function GetItemId(prof_type, index)
     local itemLink, itemID
@@ -205,18 +144,13 @@ local function GetRecipeCount(prof_type)
     return 0
 
 end
-local itemsToSend = {["items"] = {}}
+local itemsToSend = {}
 local function GetRecipes(prof_type)
+    itemsToSend["itemID"]  = {}
     for i = 1, GetRecipeCount(prof_type) do
-        GetRecipeInfo(prof_type, i)
-        local itemId = GetItemId(prof_type, i)  
+        local itemId = GetItemId(prof_type, i)
         if (itemId ~= nil) then
-            itemsToSend["items"][itemId] = {}
-            for j = 1, GetNumberOfReagents(prof_type, i) do
-                local reagentItemId = GetReagentItemid(prof_type, i, j)
-                local count = GetReagentCount(prof_type, i, j)
-                itemsToSend["items"][itemId][reagentItemId] =  count
-            end
+            t_insert(itemsToSend["itemID"],itemId)
         end
     end
 end
@@ -231,7 +165,7 @@ function FilthyProfessions:SendSyncMessage(prof_type)
             itemsToSend["profession"] = proff
             local encoded = encodeMessage(itemsToSend)
             FilthyProfessions:SendCommMessage(gPrefix, encoded, "GUILD")
-            for k,v in next, itemsToSend["items"] do itemsToSend["items"][k] = nil end
+            itemsToSend["itemID"] = nil
             itemsToSend["player"] = nil
             itemsToSend["profession"] = nil
      end
@@ -246,7 +180,7 @@ local function tprint(tbl, indent)
     end
 
     for k, v in pairs(tbl) do
-        formatting = string.rep("  ", indent) .. k .. ": "
+        local formatting = string.rep("  ", indent) .. k .. ": "
         if type(v) == "table" then
             print(formatting)
             tprint(v, indent + 1)
@@ -263,6 +197,7 @@ local function commands(msg, editbox)
     if cmd == 'sync' and args ~= "" then
         print("Soon^tm")
         -- FilthyProfessions:SendCommMessage(gPrefix, "sync-me", "WHISPER", args)
+        -- .. "|cFF91ce16/fp sync <player-name>|r or |cFF91ce16/filthyprofessions sync <player-name>|r To Sync db from another player\n"
 
     elseif cmd == 'soff' then 
         recieveLock = true
@@ -270,7 +205,6 @@ local function commands(msg, editbox)
         recieveLock = false
     elseif cmd == 'help' then
         print("\n|cFF91ce16/fp|r or |cFF91ce16/filthyprofessions|r :To toggle window\n" 
-        .. "|cFF91ce16/fp sync <player-name>|r or |cFF91ce16/filthyprofessions sync <player-name>|r To Sync db from another player\n"
         .. "|cFF91ce16/fp soff|r or |cFF91ce16/filthyprofessions soff|r :To turn off syncing from other players\n"
         .. "|cFF91ce16/fp son|r or |cFF91ce16/filthyprofessions son|r :To Turn on syncing from other players\n"
     )
