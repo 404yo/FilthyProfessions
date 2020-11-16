@@ -68,7 +68,7 @@ end
 
 
 local function CreateCheckBox(frameName, parent, checkBoxText, checked)
-    local menu = CreateFrame("Checkbutton", frameName, parent, "UICheckButtonTemplate")
+    local menu = CreateFrame("Checkbutton", "FILTHY_"..frameName, parent, "UICheckButtonTemplate")
     menu:SetWidth(25)
     menu:SetHeight(25)
     menu.text:SetText(checkBoxText)
@@ -129,7 +129,7 @@ function MainWindow:Create()
     end
     gItemsDB = FilthyProfessions.gItemsDB
     FilthyProfessions.GUI_INIT = true
-    local frameName = "MAIN_FRAME"
+    local frameName = "FILTHY_MAIN_FRAME"
   
     MainWindow.frame = CreateMainFrame(frameName)
     MainWindow.frame:SetScale(1)
@@ -141,12 +141,12 @@ function MainWindow:Create()
     MainWindow.title:SetText("|cFFF24444F|r|cFF58ED76|cFFF2F244i|r|cFF44F2E9l|r|cFF445bf2t|r|cffc144f2h|r|cfff244c6y|r Professions");
     MainWindow.title:SetFont(font, 15, "OUTLINE");
 
-    MainWindow.itemFilterMenu = CreateFrame("Frame", "ITEM_FILTER_MENU", MainWindow.parentItemFrame, "InsetFrameTemplate2")
+    MainWindow.itemFilterMenu = CreateFrame("Frame", "FILTHY_ITEM_FILTER_MENU", MainWindow.parentItemFrame, "InsetFrameTemplate2")
     MainWindow.itemFilterMenu:SetHeight(MainWindow.parentItemFrame:GetHeight() / 6)
     MainWindow.itemFilterMenu:SetWidth(MainWindow.parentItemFrame:GetWidth() - 10)
     MainWindow.itemFilterMenu:SetPoint("TOP", MainWindow.parentItemFrame, "TOP", 0, -20)
 
-    MainWindow.itemCol = CreateFrame("Frame", "ITEM_COLS", MainWindow.parentItemFrame)
+    MainWindow.itemCol = CreateFrame("Frame", "FILTHY_ITEM_COLS", MainWindow.parentItemFrame)
     MainWindow.itemCol:SetHeight(MainWindow.itemFilterMenu:GetHeight()/4-10)
     MainWindow.itemCol:SetWidth(MainWindow.parentItemFrame:GetWidth() - 10)
     MainWindow.itemCol:SetPoint("TOP", MainWindow.itemFilterMenu, "BOTTOM", 0, 0)

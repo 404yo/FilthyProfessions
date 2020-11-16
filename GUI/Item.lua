@@ -36,7 +36,13 @@ local function OnItemLeave(parent)
 end
 
 local function OnItemEnter(parent)
-    GameTooltip:SetOwner(parent, "ANCHOR_CURSOR");
+    GameTooltip:SetOwner(_G["FILTHY_MAIN_FRAME"], "ANCHOR_NONE");
+    local scale = UIParent:GetEffectiveScale()
+    local _, y = GetCursorPosition();
+    local yd = y/scale
+    local x =_G["FILTHY_MAIN_FRAME"]:GetLeft()
+
+    GameTooltip:SetPoint("BOTTOMRIGHT",UIParent,"BOTTOMLEFT",x,yd)
     GameTooltip:ClearLines();
     if parent.profession == "Enchanting" then
         GameTooltip:SetHyperlink("spell:" .. parent.itemID)
