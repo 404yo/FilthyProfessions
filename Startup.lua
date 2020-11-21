@@ -78,7 +78,6 @@ end
 
 function Startup:InitItems()
     DB:init(function() 
-        return
     end)
 end
 

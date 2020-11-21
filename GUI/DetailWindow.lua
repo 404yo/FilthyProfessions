@@ -79,6 +79,13 @@ end
 
 function DetailWindow:Create(parent)
 
+    local backdrop = {
+		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+		edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+		edgeSize = 1,
+        insets = {left = 1, right = 1, top = 1, bottom = 1}}
+
+
     MainWindow = FilthyProfessions.MainWindow
     Reagents = FilthyProfessions.Reagents
     Players = FilthyProfessions.Players
@@ -93,11 +100,15 @@ function DetailWindow:Create(parent)
 
     if DetailWindow.frame == nil then
 
-            DetailWindow.frame = CreateFrame("Frame",nil,MainWindow.frame, "BasicFrameTemplateWithInset")
+            DetailWindow.frame = CreateFrame("Frame",nil,MainWindow.frame)
             DetailWindow.info = CreateFrame("Frame",nil , DetailWindow.frame)
             DetailWindow.infoIconFrame = CreateFrame("frame",nil,DetailWindow.frame)
     end
 
+
+    DetailWindow.frame:SetBackdrop(backdrop)
+	DetailWindow.frame:SetBackdropColor(0, 0, 0, 0.8)
+	DetailWindow.frame:SetBackdropBorderColor(0.75, 0.75, 0.75, 1)
     DetailWindow.frame:SetWidth(260)
     DetailWindow.frame:SetScale(1)
     DetailWindow.frame:SetHeight(MainWindow.parentItemFrame:GetHeight())

@@ -9,15 +9,15 @@ local gItemsDB = {}
 
 local font
 
-local blacksmithingBOX = "Black Smithing"
-local enchantingBOX = "Enchanting"
-local engineeringBOX = "Engineering"
-local leatherWorkingBOX = "Leather Working"
-local tailoringBOX = "Tailoring"
-local cookingBOX = "Cooking"
-local firstAidBOX = "First Aid"
-local alchemyBOX = "Alchemy"
-local pinnedBOX = "pinned"
+local blacksmithingBOX = "FILTHY_Black Smithing"
+local enchantingBOX = "FILTHY_Enchanting"
+local engineeringBOX = "FILTHY_Engineering"
+local leatherWorkingBOX = "FILTHY_Leather Working"
+local tailoringBOX = "FILTHY_Tailoring"
+local cookingBOX = "FILTHY_Cooking"
+local firstAidBOX = "FILTHY_First Aid"
+local alchemyBOX = "FILTHY_Alchemy"
+local pinnedBOX  = "FILTHY_pinned"
 local gFilterSettings = {
     [blacksmithingBOX] = true,
     [enchantingBOX] = true,
@@ -37,7 +37,7 @@ local match = string.match
 local t_sort = table.sort
 local t_insert = table.insert
 
-    
+
 function GUI:init()
     GUI:LoadStyling()
     FilthyProfessions.GUI = GUI
@@ -48,7 +48,7 @@ function GUI:init()
     GUI.Item = FilthyProfessions.Item
     GUI.UI:Create()
     GUI:CreateItems()
-    GUI:SortItemList() 
+    GUI:SortItemList()
 end
 
 function GUI:LoadStyling()
@@ -71,7 +71,7 @@ function GUI:SearchItems(str)
     end
 
     if gFilterSettings[pinnedBOX] then
-        for k,v in next, gSearchItems do 
+        for k,v in next, gSearchItems do
             if not gPinnedItems[k]  then
                 gSearchItems[k] = false
             end
@@ -79,13 +79,13 @@ function GUI:SearchItems(str)
     end
 
     for k,v in next, GUI.Item.items do
-        if gSearchItems[k]  and gFilterSettings[v.frame.profession] then
+        if gSearchItems[k]  and gFilterSettings["FILTHY_"..v.frame.profession] then
             GUI.Item.items[k].frame:Show()
         else
             GUI.Item.items[k].frame:Hide()
         end
     end
-    GUI:SortItemList() 
+    GUI:SortItemList()
 end
 
 
@@ -97,7 +97,7 @@ function  GUI:DisplayPinnedItems()
             GUI.UI.items[k].frame:Hide()
         end
     end
-    GUI:SortItemList() 
+    GUI:SortItemList()
 end
 
 function GUI:DisplayFilteredItems()
@@ -109,16 +109,16 @@ function GUI:DisplayFilteredItems()
                 GUI.Item.items[k].frame:Hide()
             end
         end
-    else 
+    else
         for k,v in next, GUI.Item.items do
-            if gFilterSettings[v.frame.profession] then
+            if gFilterSettings["FILTHY_"..v.frame.profession] then
                 GUI.Item.items[k].frame:Show()
             else
                 GUI.Item.items[k].frame:Hide()
             end
         end
     end
-    GUI:SortItemList() 
+    GUI:SortItemList()
 end
 
 
@@ -139,10 +139,10 @@ function GUI:CreateItems(db)
 
     for profession, items in next, gItemsDB do
         for itemID, itemContent in next, items do
-            if not GUI.Item.items[itemID] then  
+            if not GUI.Item.items[itemID] then
                 GUI.Item:Create(
                 nil,
-                profession, 
+                profession,
                 GUI.UI.content,
                 itemContent
                 )
@@ -155,28 +155,33 @@ end
 
 local sortedItemIds = {}
 function GUI:SortItemList()
-    for k,v in next, sortedItemIds do sortedItemIds[k] = nil end
+  
 
     for itemID,item in next, GUI.Item.items do
-        if item.frame:IsVisible() then 
-           t_insert(sortedItemIds, {itemID, item.frame.itemLevel})
-
-        end
+        -- if item.frame:IsVisible() then
+        --    sortedItemIds[#sortedItemIds+1]["ilvl"] = item.frame.itemLevel
+        --    sortedItemIds[#sortedItemIds+1]["id"] = itemID
+                sortedItemIds[#sortedItemIds+1] = {itemID, item.frame.itemLevel}
+        -- end
     end
 
     t_sort(sortedItemIds,SortByItemLevel)
     local firstItem = true
     local kbefore
     for k, v in next, sortedItemIds do
-        local itemID = v[1]
-        if firstItem == false then
-            GUI.Item.items[itemID].setPoint( GUI.Item.items[itemID],  GUI.Item.items[kbefore],false)
-        else
-            GUI.Item.items[itemID].setPoint( GUI.Item.items[itemID], GUI.UI.content, true)
+        if GUI.Item.items[v[1]].frame:IsVisible() then
+            local itemID = v[1]
+            if firstItem == false then
+                GUI.Item.items[itemID].frame:SetPoint( "TOP",GUI.Item.items[kbefore].frame ,"BOTTOM",0,0)
+            else
+                GUI.Item.items[itemID].frame:SetPoint("TOP", GUI.UI.content, "TOP",15,-2)
+            end
+            kbefore = itemID
+            firstItem = false
+     
         end
-        kbefore = itemID
-        firstItem = false
     end
+    for k,v in next,sortedItemIds do sortedItemIds[k] = nil end
 end
 
 local function SortByProfession(a,b)

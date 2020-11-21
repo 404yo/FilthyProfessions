@@ -1,15 +1,15 @@
 local MainWindow = {}
 local FilthyProfessions = _G.FilthyProfessions
 local GUI = FilthyProfessions.GUI
-local blacksmithingBOX = "Black Smithing"
-local enchantingBOX = "Enchanting"
-local engineeringBOX = "Engineering"
-local leatherWorkingBOX = "Leather Working"
-local tailoringBOX = "Tailoring"
-local cookingBOX = "Cooking"
-local firstAidBOX = "First Aid"
-local alchemyBOX = "Alchemy"
-local pinnedBOX  = "pinned"
+local blacksmithingBOX = "FILTHY_Black Smithing"
+local enchantingBOX = "FILTHY_Enchanting"
+local engineeringBOX = "FILTHY_Engineering"
+local leatherWorkingBOX = "FILTHY_Leather Working"
+local tailoringBOX = "FILTHY_Tailoring"
+local cookingBOX = "FILTHY_Cooking"
+local firstAidBOX = "FILTHY_First Aid"
+local alchemyBOX = "FILTHY_Alchemy"
+local pinnedBOX  = "FILTHY_pinned"
 FilthyProfessions.MainWindow = MainWindow
 
 local gItemsDB
@@ -34,13 +34,6 @@ local function CreateContentFrame(frameName, parent)
     return contentFrame
 end
 
--- local function CreateMenuFrame(frameName, parent)
---     local  menuFrame = CreateFrame("Frame", frameName, parent, "InsetFrameTemplate2")
---     menuFrame:SetWidth(parent:GetWidth() / 5 - 20)
---     menuFrame:SetHeight(parent:GetHeight() - 30)
---     menuFrame:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 6, 6)
---     return menuFrame
--- end
 
 local function CheckBox_OnClick(self)
     local name = self:GetName()
@@ -68,7 +61,7 @@ end
 
 
 local function CreateCheckBox(frameName, parent, checkBoxText, checked)
-    local menu = CreateFrame("Checkbutton", "FILTHY_"..frameName, parent, "UICheckButtonTemplate")
+    local menu = CreateFrame("Checkbutton", frameName, parent, "UICheckButtonTemplate")
     menu:SetWidth(25)
     menu:SetHeight(25)
     menu.text:SetText(checkBoxText)
@@ -93,12 +86,21 @@ local function ItemFrame_close(self)
 end
 
 local function CreateParentItemFrame()
-    local parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", MainWindow.frame, "BasicFrameTemplateWithInset")
+    local backdrop = {
+		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+		edgeFile = "Interface\\ChatFrame\\ChatFrameBackground",
+		edgeSize = 1,
+        insets = {left = 1, right = 1, top = 1, bottom = 1}}
+
+    local parentItemFrame = CreateFrame("Frame", "MAIN_ITEM_FRAME", MainWindow.frame)
+    parentItemFrame:SetBackdrop(backdrop)
+	parentItemFrame:SetBackdropColor(0, 0, 0, 0.8)
+	parentItemFrame:SetBackdropBorderColor(0.75, 0.75, 0.75, 1)
     parentItemFrame:SetWidth(370)
     parentItemFrame:SetHeight(MainWindow.frame:GetHeight())
     parentItemFrame:SetPoint("LEFT", MainWindow.frame, "LEFT")
-    parentItemFrame:SetToplevel(true)
-    parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
+
+    -- parentItemFrame.CloseButton:SetScript("OnClick", ItemFrame_close)
     return parentItemFrame
 end
 
@@ -108,7 +110,6 @@ local function CreateMainFrame(frameName)
     frame:SetPoint("CENTER", UIParent, "CENTER")
     frame:SetWidth(400)
     frame:SetHeight(500)
-    frame:SetToplevel(false)
     frame:EnableMouse(true)
     frame:SetMovable(true)
     frame:RegisterForDrag("LeftButton", "RightButton")
@@ -141,7 +142,7 @@ function MainWindow:Create()
     MainWindow.title:SetText("|cFFF24444F|r|cFF58ED76|cFFF2F244i|r|cFF44F2E9l|r|cFF445bf2t|r|cffc144f2h|r|cfff244c6y|r Professions");
     MainWindow.title:SetFont(font, 15, "OUTLINE");
 
-    MainWindow.itemFilterMenu = CreateFrame("Frame", "FILTHY_ITEM_FILTER_MENU", MainWindow.parentItemFrame, "InsetFrameTemplate2")
+    MainWindow.itemFilterMenu = CreateFrame("Frame", "FILTHY_ITEM_FILTER_MENU", MainWindow.parentItemFrame)
     MainWindow.itemFilterMenu:SetHeight(MainWindow.parentItemFrame:GetHeight() / 6)
     MainWindow.itemFilterMenu:SetWidth(MainWindow.parentItemFrame:GetWidth() - 10)
     MainWindow.itemFilterMenu:SetPoint("TOP", MainWindow.parentItemFrame, "TOP", 0, -20)
@@ -167,7 +168,7 @@ function MainWindow:Create()
 
     MainWindow.itemCol.ItemLevelText = MainWindow.itemCol:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
     MainWindow.itemCol.ItemLevelText :SetPoint("RIGHT", MainWindow.itemCol, "BOTTOMRIGHT", -32, 6);
-    MainWindow.itemCol.ItemLevelText :SetText("lvl");
+    MainWindow.itemCol.ItemLevelText :SetText("ilvl");
     MainWindow.itemCol.ItemLevelText :SetFont(font, 12, "OUTLINE");
 
     MainWindow.itemCol.professionText = MainWindow.itemCol:CreateFontString(nil, "OVERLAY", "GameFontHighlight");

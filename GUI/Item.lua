@@ -55,11 +55,11 @@ end
 local function SetPoint(current, relativePoint, first)
     
     current.frame:Hide()
-    current.icon:Hide()
-    current.pinn:Hide()
-    current.text:Hide()
-    current.lvltext:Hide()
-    current.professionText:Hide()
+    -- current.icon:Hide()
+    -- current.pinn:Hide()
+    -- current.text:Hide()
+    -- current.lvltext:Hide()
+    -- current.professionText:Hide()
     
     if first then
         current.frame:SetPoint("TOP", GUI.UI.content, "TOP", 15, -2)
@@ -67,30 +67,30 @@ local function SetPoint(current, relativePoint, first)
         current.frame:SetPoint("TOP", relativePoint.frame, "BOTTOM", 0, 0)
     end
     
-    current.icon:ClearAllPoints()
-    current.pinn:ClearAllPoints()
-    current.text:ClearAllPoints()
-    current.lvltext:ClearAllPoints()
-    current.professionText:ClearAllPoints()
+    -- current.icon:ClearAllPoints()
+    -- current.pinn:ClearAllPoints()
+    -- current.text:ClearAllPoints()
+    -- current.lvltext:ClearAllPoints()
+    -- current.professionText:ClearAllPoints()
     
-    current.icon:SetPoint("LEFT", current.frame, "LEFT", 5, 0)
-    current.pinn:SetPoint("RIGHT", current.icon, "LEFT", -1, 0)
-    current.text:SetPoint("LEFT", current.icon, "RIGHT", 4, 0)
-    current.lvltext:SetPoint("CENTER", current.frame, "RIGHT", -25, 0)
-    current.professionText:SetPoint("CENTER", current.frame, "RIGHT", -80, 0)
+    -- current.icon:SetPoint("LEFT", current.frame, "LEFT", 5, 0)
+    -- current.pinn:SetPoint("RIGHT", current.icon, "LEFT", -1, 0)
+    -- current.text:SetPoint("LEFT", current.icon, "RIGHT", 4, 0)
+    -- current.lvltext:SetPoint("CENTER", current.frame, "RIGHT", -25, 0)
+    -- current.professionText:SetPoint("CENTER", current.frame, "RIGHT", -80, 0)
     
     
-    if gPinnedItems[current.frame.itemID] ~= nil then
-        current.pinn:Show()
-    else
-        current.pinn:Hide()
-    end
+    -- if gPinnedItems[current.frame.itemID] ~= nil then
+    --     current.pinn:Show()
+    -- else
+    --     current.pinn:Hide()
+    -- end
     
     current.frame:Show()
-    current.icon:Show()
-    current.text:Show()
-    current.lvltext:Show()
-    current.professionText:Show()
+    -- current.icon:Show()
+    -- current.text:Show()
+    -- current.lvltext:Show()
+    -- current.professionText:Show()
 end
 
 
@@ -106,7 +106,7 @@ function Item:Create(frameName, profession, parent, item)
     
     
     Item.items[itemID] = Item.items[itemID] or {}
-    Item.items[itemID].frame = CreateFrame("Button", frameName, parent)
+    Item.items[itemID].frame = CreateFrame("Button", itemID..profession, parent)
     Item.items[itemID].frame:SetScale(1)
     Item.items[itemID].frame:SetWidth((parent:GetWidth() - 4))
     Item.items[itemID].frame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
@@ -136,6 +136,13 @@ function Item:Create(frameName, profession, parent, item)
     Item.items[itemID].pinn:SetHeight(20)
     Item.items[itemID].pinn:SetWidth(20)
     Item.items[itemID].pinn:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+
+    if gPinnedItems[Item.items[itemID].frame.itemID] ~= nil then
+        Item.items[itemID].pinn:Show()
+    else
+        Item.items[itemID].pinn:Hide()
+    end
+    
 
     Item.items[itemID].text = Item.items[itemID].frame:CreateFontString(Item.items[itemID].frame, "OVERLAY", "GAMETOOLTIPTEXT")
     Item.items[itemID].text:SetPoint("LEFT", Item.items[itemID].icon, "RIGHT", 10, 0)
@@ -184,6 +191,8 @@ function Item:Create(frameName, profession, parent, item)
     Item.items[itemID].professionText = Item.items[itemID].frame:CreateFontString(Item.items[itemID].frame, "OVERLAY", "GAMETOOLTIPTEXT")
     Item.items[itemID].professionText:SetText(professionText)
     Item.items[itemID].professionText:SetFont(font, 12, "OUTLINE")
+    Item.items[itemID].professionText:SetPoint("CENTER", Item.items[itemID].frame, "RIGHT", -80, 0)
+
     Item.items[itemID].frame:RegisterForClicks("AnyDown")
     Item.items[itemID].frame:SetScript("OnClick", Item_Onclick)
     Item.items[itemID].frame:SetScript("OnEnter", OnItemEnter)
